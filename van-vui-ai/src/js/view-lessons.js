@@ -22,7 +22,20 @@
       }).join('') + '</ol></section>';
   }
 
-  function cardHTML(word, van) {
+  // Địa chỉ mở thẻ khi quét mã QR (cần đăng file lên web và nhập địa chỉ trong Cài đặt).
+  function cardUrl(word) {
+    var base = (S.state.classInfo.siteUrl || '').trim();
+    if (!base) return '';
+    return base.replace(/#.*$/, '') + '#/the/' + encodeURIComponent(word);
+  }
+  function qrHTML(word) {
+    var url = cardUrl(word);
+    if (!url) return '';
+    try { return '<span class="card-qr">' + VV.qr.svg(url, { label: 'Mã QR mở thẻ ' + word }) + '</span>'; }
+    catch (e) { return ''; }
+  }
+
+  function cardHTML(word, van, withQr) {
     var p = V.parse(word);
     var flat = V.compose(p.initial, p.van, 'ngang');
     var step = p.tone === 'ngang'
@@ -33,8 +46,12 @@
       '<span class="hl-van">' + ui.esc(van) + '</span></p>' +
       '<p class="van-card-word reading">' + ui.vanWord(word, van) + '</p>' +
       '<p class="van-card-step">' + ui.esc(step) + '</p>' +
-      '<div class="btn-row">' + ui.speakBtn(flat, 'Nghe “' + flat + '”') + ui.speakBtn(word, 'Nghe “' + word + '”', 'btn-icon-strong') + '</div></article>';
+      (withQr ? qrHTML(word) : '') +
+      '<div class="btn-row">' + ui.speakBtn(flat, 'Nghe “' + flat + '”') + ui.speakBtn(word, 'Nghe “' + word + '”', 'btn-icon-strong') +
+      '<button type="button" class="btn btn-sm btn-ghost" data-act="open-card" data-word="' + ui.esc(word) + '">' + ui.icon('expand') + 'Mở thẻ</button></div></article>';
   }
+
+  function countWords(g) { return g.vans.reduce(function (n, v) { return n + g.words[v].length; }, 0); }
 
   function renderLesson(root, id) {
     var g = D.GROUPS[id - 1];
@@ -46,9 +63,10 @@
     root.innerHTML = '<section class="page lesson">' +
       '<nav class="crumbs" aria-label="Vị trí"><a href="#/bai-hoc">Bài học số</a><span aria-hidden="true">/</span><span aria-current="page">Nhóm ' + g.id + '</span></nav>' +
       '<header class="page-head"><div><h1>Nhóm ' + g.id + ': <span class="reading">' + ui.esc(g.title) + '</span></h1>' +
-      '<p class="lede">' + st.label + '. ' + g.vans.length + ' vần, ' + (g.vans.length * 6) + ' tiếng, ' + g.phrases.length + ' từ ngữ và ' + g.sentences.length + ' câu.</p></div>' +
+      '<p class="lede">' + st.label + '. ' + g.vans.length + ' vần, ' + countWords(g) + ' tiếng, ' + g.phrases.length + ' từ ngữ và ' + g.sentences.length + ' câu.</p></div>' +
       '<div class="btn-row">' +
       '<button type="button" class="btn btn-primary" data-act="practice">' + ui.icon('play') + 'Cho học sinh luyện</button>' +
+      (g.id !== S.state.classInfo.progress ? '<button type="button" class="btn" data-act="set-progress">Đặt làm bài đang học</button>' : '') +
       '<button type="button" class="btn" data-act="print-cards">' + ui.icon('printer') + 'In thẻ vần</button>' +
       '<button type="button" class="btn" data-act="print-sheet">' + ui.icon('printer') + 'In phiếu luyện viết</button></div></header>' +
       (ui.canSpeak() ? '' : '<div class="banner banner-soft">Máy này chưa có giọng đọc tiếng Việt nên nút nghe sẽ không phát âm. Giáo viên đọc mẫu trực tiếp, hoặc cài giọng tiếng Việt cho hệ điều hành rồi mở lại trang.</div>') +
@@ -68,7 +86,8 @@
       }).join('') + '</section>' +
 
       '<section class="panel"><h2 class="panel-title">Thẻ vần biết nói</h2>' +
-      '<p class="muted">Ghép âm đầu với vần, đọc tiếng không dấu, thêm dấu thanh rồi viết. Bản in có đủ ' + (g.vans.length * 6) + ' thẻ.</p>' +
+      '<p class="muted">Ghép âm đầu với vần, đọc tiếng không dấu, thêm dấu thanh rồi viết. Bản in có đủ ' + countWords(g) + ' thẻ' +
+      (S.state.classInfo.siteUrl ? ', mỗi thẻ có mã QR mở bài nghe trên điện thoại.' : '. <a href="#/cai-dat/qr">Nhập địa chỉ web</a> để in thẻ có mã QR.') + '</p>' +
       '<div class="card-grid">' + g.vans.map(function (v) { return cardHTML(g.words[v][0], v) + cardHTML(g.words[v][1], v); }).join('') + '</div></section>' +
 
       '<div class="two-col">' +
@@ -169,7 +188,7 @@
   // ---------- In ấn ----------
   function printCards(g) {
     var cards = [];
-    g.vans.forEach(function (v) { g.words[v].forEach(function (w) { cards.push(cardHTML(w, v)); }); });
+    g.vans.forEach(function (v) { g.words[v].forEach(function (w) { cards.push(cardHTML(w, v, true)); }); });
     ui.printHTML('<h1 class="print-title">Thẻ vần nhóm ' + g.id + ': ' + ui.esc(g.title) + '</h1><div class="print-cards">' + cards.join('') + '</div>', 'Thẻ vần nhóm ' + g.id);
   }
 
@@ -202,7 +221,13 @@
       },
       'print-cards': function () { printCards(D.GROUPS[current - 1]); },
       'print-sheet': function () { printSheet(D.GROUPS[current - 1]); },
-      'clear-canvas': function () { if (pad) pad.clear(); }
+      'clear-canvas': function () { if (pad) pad.clear(); },
+      'open-card': function (el) { VV.studentMode.openCard(el.getAttribute('data-word')); },
+      'set-progress': function () {
+        S.commit(function (s) { s.classInfo.progress = current; });
+        ui.toast('Lớp đang học nhóm ' + current + '. Kho tiếng và gợi ý đã cập nhật.');
+        VV.app.refresh();
+      }
     }
   };
   VV.lessons = { writingSheetHTML: writingSheetHTML, cardHTML: cardHTML };

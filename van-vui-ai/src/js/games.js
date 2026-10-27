@@ -163,8 +163,43 @@
     root.innerHTML = '';
     document.body.classList.remove('student-open');
     document.getElementById('app').removeAttribute('inert');
+    var card = sm && sm.step === 'card' ? sm.card : null;
     sm = null;
+    // Mở từ mã QR: quay về bài học chứa thẻ thay vì mở lại thẻ.
+    if (card && VV.app.route === 'the') { location.hash = '#/bai-hoc/' + D.groupOfVan(card.van).id; return; }
     VV.app.refresh();
+  }
+
+  // ---------- Thẻ vần biết nói (mở từ mã QR hoặc trang bài học) ----------
+  function openCard(word) {
+    var p = V.parse(word);
+    var g = p && D.groupOfVan(p.van);
+    if (!g) { ui.toast('Không tìm thấy thẻ cho “' + word + '”.', 'error'); return; }
+    open({ noStudent: true });
+    sm.step = 'card';
+    sm.card = { word: word, van: p.van };
+    draw(true);
+  }
+  function drawCard() {
+    var c = sm.card, p = V.parse(c.word);
+    var flat = V.compose(p.initial, p.van, 'ngang');
+    var list = D.groupOfVan(c.van).words[c.van];
+    var i = list.indexOf(c.word);
+    return '<div class="sm-body sm-center">' +
+      '<h1 class="sm-title" id="sm-title">Thẻ vần ' + ui.esc(c.van) + '</h1>' +
+      '<p class="sm-parts reading">' + (p.initial ? '<span class="part">' + ui.esc(p.initial) + '</span><span class="plus">+</span>' : '') + '<span class="part part-van">' + ui.esc(c.van) + '</span></p>' +
+      '<ol class="card-steps">' +
+      '<li class="card-step"><p class="card-step-label">Đọc tiếng</p><p class="reading card-word">' + ui.esc(flat) + '</p>' + ui.speakBtn(flat, 'Nghe “' + flat + '”', 'sm-speak') + '</li>' +
+      (p.tone !== 'ngang'
+        ? '<li class="card-step"><p class="card-step-label">Thêm ' + ui.esc(V.TONE_NAME[p.tone]) + '</p><p class="reading card-word">' + ui.vanWord(c.word, c.van) + '</p>' + ui.speakBtn(c.word, 'Nghe “' + c.word + '”', 'sm-speak') + '</li>'
+        : '') +
+      '<li class="card-step"><p class="card-step-label">Viết vào vở ô li</p><p class="reading card-word card-write oli-paper">' + ui.esc(c.word) + '</p></li>' +
+      '</ol>' +
+      '<div class="btn-row sm-card-nav">' +
+      (i > 0 ? '<button type="button" class="btn btn-lg" data-sm="card" data-word="' + ui.esc(list[i - 1]) + '">' + ui.icon('arrowLeft') + ui.esc(list[i - 1]) + '</button>' : '') +
+      (i < list.length - 1 ? '<button type="button" class="btn btn-lg" data-sm="card" data-word="' + ui.esc(list[i + 1]) + '">' + ui.esc(list[i + 1]) + ui.icon('arrowRight') + '</button>' : '') +
+      '<button type="button" class="btn btn-primary btn-lg" data-sm="card-practice">' + ui.icon('play') + 'Luyện vần ' + ui.esc(c.van) + '</button>' +
+      '</div></div>';
   }
 
   // Bài của em: giáo viên giao > gợi ý của bản đồ > cấu hình truyền vào.
@@ -182,7 +217,7 @@
   }
 
   function topbar() {
-    var label = sm.cfg.preview ? 'Xem thử, không ghi kết quả' : (sm.studentId ? S.studentLabel(sm.studentId) : 'Chơi thử, không ghi kết quả');
+    var label = sm.step === 'card' ? 'Thẻ vần biết nói' : sm.cfg.preview ? 'Xem thử, không ghi kết quả' : (sm.studentId ? S.studentLabel(sm.studentId) : 'Chơi thử, không ghi kết quả');
     var prog = sm.step === 'play' ? '<div class="sm-progress" role="progressbar" aria-label="Tiến độ" aria-valuemin="0" aria-valuemax="' + sm.questions.length + '" aria-valuenow="' + sm.idx + '">' +
       sm.questions.map(function (q, i) {
         var r = sm.results[i];
@@ -286,7 +321,7 @@
 
   // enter = true khi một màn hình hoặc câu hỏi mới xuất hiện (không phát lại khi chỉ cập nhật trạng thái trả lời).
   function draw(enter) {
-    var body = sm.step === 'who' ? drawWho() : sm.step === 'intro' ? drawIntro() : sm.step === 'play' ? drawPlay() : drawDone();
+    var body = sm.step === 'card' ? drawCard() : sm.step === 'who' ? drawWho() : sm.step === 'intro' ? drawIntro() : sm.step === 'play' ? drawPlay() : drawDone();
     if (enter) body = body.replace('class="sm-body', 'class="sm-enter sm-body');
     root.innerHTML = '<div class="sm-shell" role="dialog" aria-modal="true" aria-labelledby="sm-title">' + topbar() + body + '</div>';
     if (sm.step === 'play' && !sm.answered) {
@@ -361,7 +396,9 @@
         return;
       }
       close();
-    } else if (what === 'who') { sm.studentId = b.getAttribute('data-id'); sm.step = 'intro'; draw(true); }
+    } else if (what === 'card') { sm.card = { word: b.getAttribute('data-word'), van: sm.card.van }; draw(true); }
+    else if (what === 'card-practice') { sm.cfg = { van: sm.card.van, level: 'ho-tro', noStudent: true }; sm.plan = null; sm.step = 'intro'; draw(true); }
+    else if (what === 'who') { sm.studentId = b.getAttribute('data-id'); sm.step = 'intro'; draw(true); }
     else if (what === 'guest') { sm.studentId = null; sm.step = 'intro'; draw(true); }
     else if (what === 'start') startRound();
     else if (what === 'answer') answer(b.getAttribute('data-value'));
@@ -447,5 +484,17 @@
     }
   };
 
-  VV.studentMode = { open: open, close: close, buildRound: buildRound, GAME_TYPES: GAME_TYPES };
+  VV.studentMode = { open: open, openCard: openCard, close: close, buildRound: buildRound, GAME_TYPES: GAME_TYPES };
+
+  // Địa chỉ #/the/<tiếng>: mở thẻ vần (dùng cho mã QR in trên thẻ giấy).
+  VV.views.the = {
+    render: function (root, params) {
+      var word = params[0] || '';
+      var p = V.parse(word);
+      var g = p && D.groupOfVan(p.van);
+      VV.views['bai-hoc'].render(root, [String(g ? g.id : 1)]);
+      if (g) setTimeout(function () { openCard(word); }, 0);
+    },
+    get act() { return VV.views['bai-hoc'].act; }
+  };
 })(window.VV = window.VV || {});

@@ -8,6 +8,7 @@
     { id: 'ab', label: 'Bài đo đọc A/B' },
     { id: 'viet', label: 'Chấm bài viết' },
     { id: 'doc-hieu', label: 'Đọc hiểu' },
+    { id: 'nha', label: 'Luyện ở nhà' },
     { id: 'nhat-ky', label: 'Nhật ký lỗi' }
   ];
   var tab = TABS[0];
@@ -198,7 +199,18 @@
           return '<li><span>' + ui.esc(c.label) + '</span><span class="bar"><span style="width:' + Math.round(got / max * 100) + '%"></span></span><span class="num">' + got + '/' + max + '</span></li>';
         }).join('') + '</ul>' + (w.note ? '<p class="muted">' + ui.esc(w.note) + '</p>' : '') + '</article>';
     }
-    return '<section class="panel"><h2 class="panel-title">Nét chữ lớn lên: ' + ui.esc(S.studentLabel(sid)) + '</h2>' +
+    // Gợi ý luyện tiếp theo tiêu chí còn yếu nhất ở bài mới nhất.
+    var weakest = null, low = Infinity;
+    D.WRITE_CRITERIA.forEach(function (c) {
+      var got = 0; last.items.forEach(function (it) { got += (it.scores && it.scores[c.id]) || 0; });
+      var r = got / (last.items.length * 2);
+      if (r < low) { low = r; weakest = c; }
+    });
+    var tip = weakest && low < 0.75
+      ? '<div class="write-tip"><p>Bài mới nhất còn yếu nhất ở <b>' + ui.esc(weakest.label.toLowerCase()) + '</b> (' + ui.pct(low) + ' điểm tiêu chí). Gợi ý: một phiếu luyện viết tập trung vào tiêu chí này.</p>' +
+        '<button type="button" class="btn btn-sm" data-global="compose-writing" data-crit="' + ui.esc(weakest.label) + '">' + ui.icon('pen') + 'Soạn phiếu luyện viết</button></div>'
+      : '';
+    return '<section class="panel"><h2 class="panel-title">Nét chữ lớn lên: ' + ui.esc(S.studentLabel(sid)) + '</h2>' + tip +
       (list.length > 1 ? '<div class="write-compare">' + card(first, 'Bài đầu') + card(last, 'Bài mới nhất') + '</div>' : card(first, 'Bài đã chấm')) +
       '<p class="muted">' + list.length + ' bài viết đã lưu.</p></section>';
   }
@@ -231,6 +243,37 @@
       }).join('') + '</ol>' +
       '<fieldset class="field"><legend>Cách đọc</legend>' + ui.segmented('dh-support', [{ id: 'tu-doc', label: 'Em tự đọc' }, { id: 'duoc-doc', label: 'Được đọc hỗ trợ' }], dh.support, 'Cách đọc') + '</fieldset>' +
       '<div class="btn-row"><button type="submit" class="btn btn-primary">Lưu kết quả đọc hiểu</button></div></form>';
+  }
+
+  // ---------- Luyện ở nhà (5 phút cùng con) ----------
+  function homeHTML() {
+    var hw = S.state.homework;
+    if (!hw.length) {
+      return '<section class="panel">' + ui.emptyState('Chưa giao gói nào về nhà',
+        'Soạn gói 5 phút cùng con ở Trợ lý soạn bài, duyệt, rồi bấm Giao về nhà trong Kho học liệu.',
+        '<a class="btn btn-primary" href="#/tro-ly/phu-huynh">Soạn gói 5 phút cùng con</a>') + '</section>';
+    }
+    var packs = [];
+    hw.forEach(function (h) { if (packs.indexOf(h.packId) === -1) packs.push(h.packId); });
+    var done = hw.filter(function (h) { return h.status === 'da-lam'; }).length;
+    var head = '<section class="panel"><p>Đã giao <b class="num">' + hw.length + '</b> lượt, phụ huynh báo đã làm <b class="num">' + done + '</b> lượt (' + ui.pct(done / hw.length) +
+      '). Phụ huynh hỗ trợ thực hành; giáo viên kiểm tra lại trên lớp để xác định mức tiến bộ.</p></section>';
+    return head + packs.map(function (pid) {
+      var pack = S.state.library.filter(function (x) { return x.id === pid; })[0];
+      var rows = hw.filter(function (h) { return h.packId === pid; });
+      var title = pack ? pack.title : 'Gói đã xóa khỏi kho học liệu';
+      return '<section class="panel"><div class="panel-head"><h2 class="panel-title">' + ui.esc(title) + '</h2>' +
+        (pack ? '<button type="button" class="btn btn-sm" data-act="hw-print" data-id="' + pid + '">' + ui.icon('printer') + 'In bản giấy</button>' : '') + '</div>' +
+        '<div class="table-wrap"><table class="table hw-table"><thead><tr><th scope="col">Học sinh</th><th scope="col">Ngày giao</th><th scope="col">Kết quả</th><th scope="col">Mức trợ giúp</th><th scope="col">Ghi chú</th><th scope="col"><span class="sr-only">Thao tác</span></th></tr></thead><tbody>' +
+        rows.map(function (h) {
+          return '<tr><th scope="row">' + ui.esc(S.studentLabel(h.studentId)) + '</th><td class="tnum">' + ui.fmtShort(h.sentAt) + '</td>' +
+            '<td>' + ui.segmented('hw-st-' + h.id, D.HOME_STATUS, h.status, 'Kết quả của ' + S.studentLabel(h.studentId)) + '</td>' +
+            '<td><select data-hw-support="' + h.id + '" aria-label="Mức trợ giúp của ' + ui.esc(S.studentLabel(h.studentId)) + '"' + (h.status === 'da-lam' ? '' : ' disabled') + '><option value="">Chưa ghi</option>' +
+            D.HOME_SUPPORT.map(function (o) { return '<option value="' + o.id + '"' + (h.support === o.id ? ' selected' : '') + '>' + o.label + '</option>'; }).join('') + '</select></td>' +
+            '<td><input data-hw-note="' + h.id + '" value="' + ui.esc(h.note) + '" placeholder="Tiếng con còn đọc sai…" autocomplete="off" aria-label="Ghi chú cho ' + ui.esc(S.studentLabel(h.studentId)) + '"></td>' +
+            '<td><button type="button" class="btn-icon" data-act="hw-del" data-id="' + h.id + '" aria-label="Bỏ giao gói cho ' + ui.esc(S.studentLabel(h.studentId)) + '">' + ui.icon('trash') + '</button></td></tr>';
+        }).join('') + '</tbody></table></div></section>';
+    }).join('');
   }
 
   // ---------- Nhật ký lỗi ----------
@@ -278,7 +321,7 @@
       return;
     }
     var body = tab.id === 'phieu' ? (phieu.sess ? phieuSessionHTML() : phieuSetupHTML())
-      : tab.id === 'ab' ? abHTML() : tab.id === 'viet' ? vietHTML() : tab.id === 'doc-hieu' ? dhHTML() : logHTML();
+      : tab.id === 'ab' ? abHTML() : tab.id === 'viet' ? vietHTML() : tab.id === 'doc-hieu' ? dhHTML() : tab.id === 'nha' ? homeHTML() : logHTML();
     root.innerHTML = '<section class="page"><header class="page-head"><div><h1>Đánh giá</h1>' +
       '<p class="lede">Giáo viên nghe, quan sát và ghi kết quả. Hệ thống chưa tự chấm phát âm hay chữ viết.</p></div></header>' +
       '<nav class="tabs" aria-label="Công cụ đánh giá">' + TABS.map(function (t) {
@@ -338,6 +381,19 @@
           VV.app.refresh();
         });
       },
+      'hw-del': function (el) {
+        var id = el.getAttribute('data-id');
+        ui.confirmDialog({ title: 'Bỏ giao gói này?', body: 'Dòng ghi nhận luyện ở nhà của em này sẽ bị xóa.' }, 'Bỏ giao', true).then(function (ok) {
+          if (!ok) return;
+          S.commit(function (s) { s.homework = s.homework.filter(function (h) { return h.id !== id; }); });
+          VV.app.refresh();
+        });
+      },
+      'hw-print': function (el) {
+        var btn = document.createElement('button');
+        btn.setAttribute('data-id', el.getAttribute('data-id'));
+        VV.views['tro-ly'].act['lib-print'](btn);
+      },
       'log-csv': function () {
         var rows = [['Ngày', 'Học sinh', 'Tiếng', 'Vần', 'Kỹ năng', 'Thời điểm', 'Kết quả', 'Lỗi', 'Nguồn']];
         logRows().forEach(function (r) {
@@ -382,6 +438,23 @@
         if (t.name === 'source') { dh.source = t.value; dh.answers = {}; VV.app.refresh(); }
         if (/^dh-q\d$/.test(t.name)) dh.answers[Number(t.name.slice(4))] = Number(t.value);
         if (t.name === 'dh-support') dh.support = t.value;
+        return;
+      }
+      if (/^hw-st-/.test(t.name)) {
+        var hid = t.name.slice(6);
+        S.commit(function (s) { s.homework.forEach(function (h) { if (h.id === hid) { h.status = t.value; h.updatedAt = Date.now(); if (t.value !== 'da-lam') h.support = ''; } }); });
+        VV.app.refresh();
+        return;
+      }
+      if (t.hasAttribute('data-hw-support')) {
+        var sid2 = t.getAttribute('data-hw-support');
+        S.commit(function (s) { s.homework.forEach(function (h) { if (h.id === sid2) { h.support = t.value; h.updatedAt = Date.now(); } }); });
+        return;
+      }
+      if (t.hasAttribute('data-hw-note')) {
+        var nid = t.getAttribute('data-hw-note');
+        S.commit(function (s) { s.homework.forEach(function (h) { if (h.id === nid) h.note = t.value.trim(); }); });
+        ui.toast('Đã lưu ghi chú.');
         return;
       }
       if (f === 'log') {

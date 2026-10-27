@@ -152,6 +152,21 @@
 
   GROUPS.forEach(function (g) { g.title = g.vans.join(', '); });
 
+  // Bản gốc để khôi phục; giáo viên có thể sửa tiếng, từ, câu cho khớp bộ sách của trường.
+  var DEFAULTS = JSON.parse(JSON.stringify(GROUPS));
+  function clone(x) { return JSON.parse(JSON.stringify(x)); }
+  function applyOverrides(ov) {
+    GROUPS.forEach(function (g, i) {
+      var d = DEFAULTS[i], o = (ov && ov[g.id]) || {};
+      g.words = clone(o.words || d.words);
+      g.vans.forEach(function (v) { if (!g.words[v] || !g.words[v].length) g.words[v] = clone(d.words[v]); });
+      g.phrases = clone(o.phrases || d.phrases);
+      g.sentences = clone(o.sentences || d.sentences);
+      g.fill = clone(o.fill || d.fill);
+    });
+  }
+  function defaultsOf(id) { return clone(DEFAULTS[id - 1]); }
+
   var READ_ERRORS = [
     { id: 'am-dau', label: 'Sai âm đầu' },
     { id: 'van', label: 'Sai vần' },
@@ -179,6 +194,16 @@
     { id: 'dau-vao', label: 'Đầu vào' },
     { id: 'thuong-xuyen', label: 'Thường xuyên' },
     { id: 'dau-ra', label: 'Đầu ra' }
+  ];
+  var HOME_STATUS = [
+    { id: 'da-giao', label: 'Đã giao' },
+    { id: 'da-lam', label: 'Đã làm' },
+    { id: 'chua-lam', label: 'Chưa làm' }
+  ];
+  var HOME_SUPPORT = [
+    { id: 'tu-lam', label: 'Con tự làm' },
+    { id: 'nhac-nho', label: 'Cần nhắc' },
+    { id: 'lam-cung', label: 'Bố mẹ làm cùng' }
   ];
   var TOPICS = ['Gia đình', 'Trường lớp', 'Con vật', 'Cây và quả', 'Thời tiết'];
 
@@ -210,7 +235,11 @@
     LEVELS: LEVELS,
     PHASES: PHASES,
     TOPICS: TOPICS,
+    HOME_STATUS: HOME_STATUS,
+    HOME_SUPPORT: HOME_SUPPORT,
     groupOfVan: groupOfVan,
+    applyOverrides: applyOverrides,
+    defaultsOf: defaultsOf,
     allVans: allVans,
     vansUpTo: vansUpTo,
     label: label

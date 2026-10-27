@@ -40,7 +40,8 @@
 
     var asgHTML = asg
       ? '<p class="assigned">' + ui.icon('check') + '<span>Đang giao: vần <b class="glyph-inline">' + ui.esc(asg.van) + '</b>, mức ' +
-        ui.esc(D.label(D.LEVELS, asg.level).toLowerCase()) + ' (' + (asg.source === 'goi-y' ? 'theo gợi ý' : 'giáo viên chọn') + ', ' + ui.fmtShort(asg.date) + ').</span></p>'
+        ui.esc(D.label(D.LEVELS, asg.level).toLowerCase()) + ' (' + (asg.source === 'goi-y' ? 'theo gợi ý' : 'giáo viên chọn') + ', ' + ui.fmtShort(asg.date) + ').</span>' +
+        '<button type="button" class="btn btn-sm btn-ghost" data-act="unassign" data-student="' + studentId + '">Bỏ giao</button></p>'
       : '<p class="assigned is-none">Chưa giao bài cho em này.</p>';
 
     return '<article class="profile" aria-label="Hồ sơ ' + ui.esc(S.studentLabel(studentId)) + '">' +
@@ -59,6 +60,7 @@
       '<button type="button" class="btn btn-primary" data-act="assign" data-student="' + studentId + '" data-van="' + ui.esc(sug.van) + '" data-level="' + sug.level + '">Giao bài này</button>' +
       '<button type="button" class="btn" data-act="change" data-student="' + studentId + '">Đổi bài</button>' +
       '<button type="button" class="btn btn-ghost" data-act="preview" data-van="' + ui.esc((asg || sug).van) + '" data-level="' + (asg || sug).level + '">' + ui.icon('eye') + 'Xem bài luyện</button>' +
+      '<button type="button" class="btn btn-ghost" data-act="compose" data-van="' + ui.esc(sug.van) + '" data-error="' + ui.esc(sug.topError || '') + '">' + ui.icon('pen') + 'Soạn bài cho em này</button>' +
       '</div>' + asgHTML + '</aside></article>';
   }
 
@@ -128,10 +130,28 @@
               (r.correct ? '<span class="pill pill-ok">Đúng</span>' : '<span class="pill pill-miss">Chưa đúng</span>') + '</td><td>' + (r.error ? ui.esc(D.label(D.READ_ERRORS, r.error)) : '') + '</td></tr>';
           }).join('') + '</tbody></table></div>'
         : '<p>Chưa có lần đọc nào của vần này.</p>') +
+      timelineHTML(recs.filter(function (r) { return r.skill === 'doc'; })) +
       '<p class="muted">Trò chơi nhận diện: ' + (games.length ? games.filter(function (r) { return r.correct; }).length + '/' + games.length + ' lượt chọn đúng.' : 'chưa chơi.') + '</p>' +
       '<div class="dialog-actions"><button type="button" class="btn" data-global="close-dialog">Đóng</button>' +
       '<a class="btn btn-primary" href="#/danh-gia/phieu/' + encodeURIComponent(sid) + '/' + g.id + '/' + encodeURIComponent(van) + '" data-global="close-dialog">Ghi phiếu đọc vần này</a></div>'
     );
+  }
+
+  // Đối chiếu: kết quả đọc vần này theo từng buổi, cũ đến mới.
+  function timelineHTML(reads) {
+    var byDay = {}, order = [];
+    reads.slice().sort(function (a, b) { return a.date - b.date; }).forEach(function (r) {
+      var key = ui.fmtDate(r.date);
+      if (!byDay[key]) { byDay[key] = { c: 0, t: 0, date: r.date }; order.push(key); }
+      byDay[key].t++; if (r.correct) byDay[key].c++;
+    });
+    if (order.length < 1) return '';
+    return '<h3 class="sub-title">Đối chiếu theo buổi</h3><ol class="timeline">' + order.map(function (k) {
+      var d = byDay[k], r = d.c / d.t;
+      return '<li><span class="tnum">' + ui.fmtShort(d.date) + '</span><span class="bar" aria-hidden="true"><span style="width:' + Math.round(r * 100) + '%"></span></span>' +
+        '<span class="num">' + d.c + '/' + d.t + '</span></li>';
+    }).join('') + '</ol>' +
+      (order.length > 1 ? '<p class="muted">' + (byDay[order[order.length - 1]].c / byDay[order[order.length - 1]].t > byDay[order[0]].c / byDay[order[0]].t ? 'Buổi gần nhất tốt hơn buổi đầu.' : 'Buổi gần nhất chưa tốt hơn buổi đầu; cân nhắc đổi cách luyện.') + '</p>' : '');
   }
 
   function changeDialog(studentId) {
@@ -165,6 +185,7 @@
   }
 
   view.render = render;
+  view.setCompare = function (on) { view.compare = on; };
   view.act = {
     detail: function (el) {
       var prof = el.closest('.compare-grid > div');
@@ -183,6 +204,20 @@
       VV.app.refresh();
     },
     change: function (el) { changeDialog(el.getAttribute('data-student')); },
+    unassign: function (el) {
+      var sid = el.getAttribute('data-student');
+      S.commit(function (s) { delete s.assignments[sid]; });
+      ui.toast('Đã bỏ giao bài cho ' + S.studentLabel(sid) + '.');
+      VV.app.refresh();
+    },
+    compose: function (el) {
+      var van = el.getAttribute('data-van'), err = el.getAttribute('data-error');
+      VV.assistant.prefill('exercises', {
+        vans: [van],
+        errors: err ? [D.label(D.READ_ERRORS, err)] : [],
+        objective: 'Đọc đúng các tiếng có vần ' + van + ' trong tiếng, từ và câu; phân biệt vần ' + van + ' với các vần gần giống.'
+      });
+    },
     preview: function (el) {
       VV.studentMode.open({ preview: true, van: el.getAttribute('data-van'), level: el.getAttribute('data-level') });
     }

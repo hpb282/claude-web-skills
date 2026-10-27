@@ -208,7 +208,7 @@
     var minutes = Math.max(1, Math.round((Date.now() - d.startedAt) / 60000));
     var fresh = d.fresh; d.fresh = false;
     return '<section class="panel draft' + (fresh ? ' is-fresh' : '') + '" aria-label="Bản nháp cần giáo viên duyệt">' +
-      '<div class="draft-head"><h2 class="panel-title">Bản nháp cần giáo viên duyệt</h2>' +
+      '<div class="draft-head"><h2 class="panel-title">' + (d.editingId ? 'Sửa học liệu đã duyệt' : 'Bản nháp cần giáo viên duyệt') + '</h2>' +
       '<span class="source-tag ' + (d.source === 'ai' ? 'is-ai' : '') + '">' + (d.source === 'ai' ? 'Nháp AI' : 'Nháp từ mẫu') + '</span></div>' +
       khoSummaryHTML(t.tool, d.data) +
       '<div class="draft-body">' + draftBody(t.tool, d.data) + '</div>' +
@@ -216,7 +216,7 @@
       '<div class="field field-inline"><label for="ap-min">Thời gian soạn và duyệt</label><input id="ap-min" name="minutes" type="number" inputmode="numeric" min="1" max="240" value="' + minutes + '" class="input-short num"><span>phút</span></div>' +
       '<label class="check"><input type="checkbox" name="ok" required><span>Tôi đã kiểm tra ngữ liệu, mức độ và đáp án.</span></label>' +
       '<div class="btn-row"><button type="button" class="btn btn-ghost" data-act="discard">Bỏ bản nháp</button>' +
-      '<button type="submit" class="btn btn-primary">Duyệt và lưu vào kho học liệu</button></div></form></section>';
+      '<button type="submit" class="btn btn-primary">' + (d.editingId ? 'Lưu bản sửa' : 'Duyệt và lưu vào kho học liệu') + '</button></div></form></section>';
   }
 
   // ---------- Kho học liệu ----------
@@ -227,8 +227,12 @@
       return '<li class="lib-item"><div><p class="lib-title">' + ui.esc(it.title) + '</p>' +
         '<p class="lib-meta"><span class="kind-tag">' + KIND_LABEL[it.kind] + '</span>' +
         '<span>Vần ' + ui.esc((it.vans || []).join(', ')) + '</span><span>Duyệt ' + ui.fmtDate(it.approvedAt) + '</span>' +
-        '<span>' + (it.source === 'ai' ? 'AI soạn nháp' : 'Từ mẫu') + '</span><span>' + (it.minutes || 0) + ' phút</span></p></div>' +
+        '<span>' + (it.source === 'ai' ? 'AI soạn nháp' : 'Từ mẫu') + '</span><span>' + (it.minutes || 0) + ' phút</span>' +
+        (it.source === 'ai' ? '<span>' + (it.edits && it.edits.length ? 'Giáo viên sửa ' + it.edits.length + ' chỗ' : 'Duyệt nguyên bản AI') + '</span>' : '') +
+        (it.kind === 'phu-huynh' ? '<span>Đã giao ' + S.state.homework.filter(function (h) { return h.packId === it.id; }).length + ' em</span>' : '') + '</p></div>' +
         '<div class="btn-row"><button type="button" class="btn btn-sm" data-act="lib-view" data-id="' + it.id + '">' + ui.icon('eye') + 'Xem</button>' +
+        '<button type="button" class="btn btn-sm" data-act="lib-edit" data-id="' + it.id + '">' + ui.icon('pen') + 'Sửa</button>' +
+        (it.kind === 'phu-huynh' ? '<button type="button" class="btn btn-sm" data-act="lib-home" data-id="' + it.id + '">' + ui.icon('home') + 'Giao về nhà</button>' : '') +
         '<button type="button" class="btn btn-sm" data-act="lib-print" data-id="' + it.id + '">' + ui.icon('printer') + 'In</button>' +
         '<button type="button" class="btn-icon" data-act="lib-del" data-id="' + it.id + '" aria-label="Xóa ' + ui.esc(it.title) + '">' + ui.icon('trash') + '</button></div></li>';
     }).join('') + '</ul>';
@@ -259,6 +263,72 @@
         '<h3 class="sub-title">Tin nhắn điện thoại</h3><p class="phone-msg">' + ui.esc(c.phone) + '</p>';
     }
     return '<ol>' + c.guide.map(function (x) { return '<li>' + ui.esc(x) + '</li>'; }).join('') + '</ol><p class="reading big">' + c.words.map(ui.esc).join(' &nbsp; ') + '</p><p class="muted">' + ui.esc(c.teacherNote) + '</p>';
+  }
+
+  function editLogHTML(it) {
+    if (it.source !== 'ai' && !(it.edits && it.edits.length)) return '';
+    var edits = it.edits || [];
+    var head = '<h3 class="sub-title">Nhật ký chỉnh sửa</h3>' +
+      '<p class="muted">' + (it.source === 'ai' ? 'Bản nháp do AI soạn. ' : '') +
+      (it.outsideStart != null ? 'Tiếng ngoài kho lúc nhận: <span class="num">' + it.outsideStart + '</span>, lúc duyệt: <span class="num">' + (it.outsideEnd || 0) + '</span>. ' : '') +
+      (edits.length ? 'Giáo viên đã sửa <span class="num">' + edits.length + '</span> chỗ.' : 'Giáo viên duyệt nguyên bản, không sửa.') + '</p>';
+    if (!edits.length) return head;
+    return head + '<div class="table-wrap"><table class="table edit-log"><thead><tr><th scope="col">Mục</th><th scope="col">Bản trước</th><th scope="col">Sau khi sửa</th></tr></thead><tbody>' +
+      edits.slice(0, 40).map(function (e) {
+        return '<tr><td>' + ui.esc(e.field) + '</td><td class="was">' + ui.esc(e.before) + '</td><td>' + ui.esc(e.after) + '</td></tr>';
+      }).join('') + '</tbody></table></div>' + (edits.length > 40 ? '<p class="muted">Và ' + (edits.length - 40) + ' chỗ khác.</p>' : '');
+  }
+
+  // ---------- So sánh bản nháp gốc với bản duyệt ----------
+  var FIELD_LABEL = {
+    type: 'loại', van: 'vần', prompt: 'lời giao việc', question: 'câu hỏi', options: 'lựa chọn', answer: 'đáp án', teacherNote: 'ghi chú',
+    title: 'Tên', story: 'Nội dung truyện', read3: '3 phút đọc', readWords: 'Tiếng, câu để đọc', write2: '2 phút viết',
+    writeWords: 'Tiếng để viết', tips: 'Lời khuyên', phone: 'Tin nhắn', guide: 'Hướng dẫn', words: 'Tiếng, từ để viết'
+  };
+  function val(v) { return Array.isArray(v) ? v.join(' | ') : String(v == null ? '' : v); }
+  function flatten(tool, data) {
+    var out = {};
+    if (tool === 'exercises') {
+      data.tasks.forEach(function (t, i) {
+        var label = 'Nhiệm vụ ' + (i + 1);
+        out['t:' + t._id] = { label: label, value: t.question, task: true };
+        ['type', 'van', 'prompt', 'question', 'options', 'answer', 'teacherNote'].forEach(function (k) {
+          out['t:' + t._id + ':' + k] = { label: label + ', ' + FIELD_LABEL[k], value: k === 'type' ? VV.ai.TASK_TYPES[t.type] : val(t[k]), parent: 't:' + t._id };
+        });
+      });
+    } else if (tool === 'story') {
+      out.title = { label: 'Tên truyện', value: data.title };
+      out.story = { label: 'Nội dung truyện', value: data.story };
+      data.questions.forEach(function (q, i) {
+        out['q' + i] = { label: 'Câu hỏi ' + (i + 1), value: q.q };
+        out['a' + i] = { label: 'Trả lời mẫu ' + (i + 1), value: q.a };
+      });
+    } else {
+      Object.keys(data).forEach(function (k) { if (k[0] !== '_') out[k] = { label: FIELD_LABEL[k] || k, value: val(data[k]) }; });
+    }
+    return out;
+  }
+  function diffDraft(tool, before, after) {
+    var a = flatten(tool, before), b = flatten(tool, after), edits = [];
+    Object.keys(a).forEach(function (k) {
+      if (a[k].parent && !(a[k].parent in b)) return;
+      if (!(k in b)) edits.push({ field: a[k].task ? a[k].label + ' (xóa)' : a[k].label, before: a[k].value, after: 'Đã xóa' });
+      else if (!a[k].task && a[k].value !== b[k].value) edits.push({ field: b[k].label, before: a[k].value, after: b[k].value });
+    });
+    Object.keys(b).forEach(function (k) {
+      if (b[k].task && !(k in a)) edits.push({ field: b[k].label + ' (thêm)', before: 'Chưa có', after: b[k].value });
+    });
+    return edits;
+  }
+  function clone(x) { return JSON.parse(JSON.stringify(x)); }
+  function tagTasks(data) {
+    (data.tasks || []).forEach(function (t) { if (!t._id) t._id = S.uid('task'); });
+    return data;
+  }
+  function makeDraft(tool, data, source, params, extra) {
+    tagTasks(data);
+    return Object.assign({ data: data, source: source, startedAt: Date.now(), params: params, fresh: true,
+      original: clone(data), outsideStart: outsideWords(tool, data).length }, extra || {});
   }
 
   function printLib(it) {
@@ -323,7 +393,7 @@
     var startedAt = Date.now();
     if (useAI) { busy = { tool: t.tool, controller: controller }; VV.app.refresh(); }
     VV.ai.draft(t.tool, params, useAI, controller && controller.signal).then(function (res) {
-      drafts[t.tool] = { data: res.data, source: res.source, startedAt: startedAt, params: params, fresh: true };
+      drafts[t.tool] = makeDraft(t.tool, res.data, res.source, params, { startedAt: startedAt });
       if (t.tool === 'exercises' && !res.data.tasks.length) throw new Error('AI không trả về nhiệm vụ nào. Bấm soạn lại.');
       ui.toast(useAI ? 'AI đã soạn xong bản nháp. Hãy kiểm tra trước khi duyệt.' : 'Đã soạn bản nháp từ mẫu.');
     }).catch(function (err) {
@@ -421,18 +491,75 @@
         exercises: 'Bài tập vần ' + d.params.vans.join(', '),
         story: d.data.title, parent: d.data.title, writing: d.data.title
       };
+      var edits = diffDraft(tab.tool, d.original, d.data);
+      var now = Date.now();
       S.commit(function (s) {
-        s.library.push({ id: S.uid('lib'), kind: tab.libKind, title: titleMap[tab.tool], vans: d.params.vans,
-          createdAt: d.startedAt, approvedAt: Date.now(), minutes: minutes, source: d.source, content: JSON.parse(JSON.stringify(d.data)) });
-        s.effort.push({ id: S.uid('e'), date: Date.now(), tool: tab.label, minutes: minutes, note: 'Vần ' + d.params.vans.join(', ') + (d.source === 'ai' ? ' (AI soạn nháp)' : ' (từ mẫu)') });
+        var prev = d.editingId ? s.library.filter(function (x) { return x.id === d.editingId; })[0] : null;
+        if (prev) {
+          prev.title = titleMap[tab.tool];
+          prev.vans = d.params.vans;
+          prev.content = clone(d.data);
+          prev.approvedAt = now;
+          prev.minutes = (prev.minutes || 0) + minutes;
+          prev.edits = (prev.edits || []).concat(edits);
+          prev.outsideEnd = out.length;
+        } else {
+          s.library.push({ id: S.uid('lib'), kind: tab.libKind, title: titleMap[tab.tool], vans: d.params.vans,
+            createdAt: d.startedAt, approvedAt: now, minutes: minutes, source: d.source, content: clone(d.data),
+            aiOriginal: d.source === 'ai' ? clone(d.original) : null, edits: edits, outsideStart: d.outsideStart, outsideEnd: out.length });
+        }
+        s.effort.push({ id: S.uid('e'), date: now, tool: tab.label, minutes: minutes,
+          note: (prev ? 'Sửa lại: ' : '') + 'Vần ' + d.params.vans.join(', ') + (d.source === 'ai' ? ' (AI soạn nháp, sửa ' + edits.length + ' chỗ)' : ' (từ mẫu)') });
       });
       delete drafts[tab.tool];
-      ui.toast('Đã duyệt và lưu vào kho học liệu.');
+      ui.toast(d.editingId ? 'Đã lưu bản sửa vào kho học liệu.' : 'Đã duyệt và lưu vào kho học liệu.');
       VV.app.refresh();
     });
   }
 
-  VV.assistant = { isDirty: function () { return Object.keys(drafts).length > 0 || !!busy; } };
+  // Giao gói "5 phút cùng con" về nhà cho một số em.
+  function homeDialog(packId) {
+    var it = S.state.library.filter(function (x) { return x.id === packId; })[0];
+    var already = S.state.homework.filter(function (h) { return h.packId === packId; }).map(function (h) { return h.studentId; });
+    ui.openDialog('<form><h2 id="dialog-title" class="dialog-title">Giao về nhà: ' + ui.esc(it.title) + '</h2>' +
+      '<p class="muted">Đánh dấu sẵn các em có vần cần luyện trùng với gói này. Giáo viên có thể đổi lại.</p>' +
+      '<fieldset class="field"><legend>Học sinh</legend><div class="chip-check">' +
+      S.state.students.map(function (s) {
+        var sug = S.suggest(s.id);
+        var pre = already.indexOf(s.id) === -1 && (it.vans || []).indexOf(sug.van) !== -1;
+        return '<input type="checkbox" id="hw-' + s.id + '" name="stu" value="' + s.id + '"' + (pre ? ' checked' : '') + (already.indexOf(s.id) !== -1 ? ' disabled' : '') + '>' +
+          '<label for="hw-' + s.id + '">' + ui.esc(s.code) + (already.indexOf(s.id) !== -1 ? ' (đã giao)' : '') + '</label>';
+      }).join('') + '</div></fieldset>' +
+      '<div class="dialog-actions"><button type="button" class="btn" data-global="close-dialog">Hủy</button><button type="submit" class="btn btn-primary">Giao gói</button></div></form>',
+      {
+        onMount: function (dlg) {
+          dlg.querySelector('form').onsubmit = function (e) {
+            e.preventDefault();
+            var ids = Array.prototype.map.call(e.target.querySelectorAll('input[name="stu"]:checked'), function (i) { return i.value; });
+            if (!ids.length) { ui.toast('Chọn ít nhất một học sinh.', 'error'); return; }
+            S.commit(function (s) {
+              ids.forEach(function (sid) { s.homework.push({ id: S.uid('hw'), packId: packId, studentId: sid, sentAt: Date.now(), status: 'da-giao', support: '', note: '', updatedAt: Date.now() }); });
+            });
+            ui.closeDialog();
+            ui.toast('Đã giao gói cho ' + ids.length + ' em. Ghi nhận kết quả ở Đánh giá, mục Luyện ở nhà.');
+            VV.app.refresh();
+          };
+        }
+      });
+  }
+
+  // Mở công cụ soạn với các ô đã điền sẵn (gọi từ bản đồ âm vần, bài viết…).
+  function prefill(tool, p) {
+    var f = formState(tool);
+    if (p.vans && p.vans.length) f.vans = p.vans.slice();
+    if (p.errors) f.errors = p.errors.slice();
+    if (p.studentId != null) f.studentId = p.studentId;
+    if (p.objective) f.objective = p.objective;
+    var t = TABS.filter(function (x) { return x.tool === tool; })[0];
+    VV.app.go('tro-ly/' + t.id);
+  }
+
+  VV.assistant = { isDirty: function () { return Object.keys(drafts).length > 0 || !!busy; }, prefill: prefill, editLogHTML: editLogHTML };
 
   VV.views['tro-ly'] = {
     render: render,
@@ -456,15 +583,25 @@
       },
       'add-task': function (el) {
         var lv = el.getAttribute('data-level');
-        drafts[tab.tool].data.tasks.push({ level: lv, type: 'doc', van: (forms.exercises && forms.exercises.vans[0]) || '', prompt: 'Đọc to cho cô nghe.', question: '', options: [], answer: '', teacherNote: '' });
+        drafts[tab.tool].data.tasks.push({ _id: S.uid('task'), level: lv, type: 'doc', van: (forms.exercises && forms.exercises.vans[0]) || '', prompt: 'Đọc to cho cô nghe.', question: '', options: [], answer: '', teacherNote: '' });
         VV.app.refresh();
       },
       'copy-phone': function () { ui.copyText(drafts.parent.data.phone); },
       'lib-view': function (el) {
         var it = S.state.library.filter(function (x) { return x.id === el.getAttribute('data-id'); })[0];
-        ui.openDialog('<h2 id="dialog-title" class="dialog-title">' + ui.esc(it.title) + '</h2><div class="lib-content">' + libContentHTML(it) + '</div>' +
+        ui.openDialog('<h2 id="dialog-title" class="dialog-title">' + ui.esc(it.title) + '</h2><div class="lib-content">' + libContentHTML(it) + editLogHTML(it) + '</div>' +
           '<div class="dialog-actions"><button type="button" class="btn" data-global="close-dialog">Đóng</button></div>', { wide: true });
       },
+      'lib-edit': function (el) {
+        var it = S.state.library.filter(function (x) { return x.id === el.getAttribute('data-id'); })[0];
+        var t = TABS.filter(function (x) { return x.libKind === it.kind; })[0];
+        if (drafts[t.tool]) { ui.toast('Đang có bản nháp chưa duyệt ở mục ' + t.label + '. Duyệt hoặc bỏ bản nháp đó trước.', 'error'); return; }
+        var data = tagTasks(clone(it.content));
+        drafts[t.tool] = makeDraft(t.tool, data, it.source, { vans: (it.vans || []).slice() }, { editingId: it.id });
+        formState(t.tool).vans = (it.vans || []).slice();
+        VV.app.go('tro-ly/' + t.id);
+      },
+      'lib-home': function (el) { homeDialog(el.getAttribute('data-id')); },
       'lib-print': function (el) {
         printLib(S.state.library.filter(function (x) { return x.id === el.getAttribute('data-id'); })[0]);
       },

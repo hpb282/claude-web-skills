@@ -61,9 +61,54 @@
     return '<figure class="chart"><figcaption class="chart-head"><span class="chart-title">Loại lỗi đọc đã ghi</span><span class="muted num">' + total + ' lỗi</span></figcaption>' +
       (total ? '<div class="err-chart">' + D.READ_ERRORS.map(function (e) {
         return '<div class="err-row"><span class="err-label">' + ui.esc(e.label) + '</span>' +
-          '<span class="err-track" tabindex="0" data-tip="' + ui.esc(e.label + ': ' + c[e.id] + ' lần') + '"><span class="err-fill" style="width:' + Math.round(c[e.id] / max * 100) + '%"></span></span>' +
+          '<span class="err-track" tabindex="0" data-tip="' + ui.esc(e.label + ': ' + c[e.id] + ' lần') + '"><span class="err-fill' + (c[e.id] ? '' : ' is-zero') + '" style="width:' + Math.round(c[e.id] / max * 100) + '%"></span></span>' +
           '<span class="err-val num">' + c[e.id] + '</span></div>';
       }).join('') + '</div>' : '<p class="muted">Chưa ghi lỗi nào.</p>') + '</figure>';
+  }
+
+  // Luyện ở nhà: tỷ lệ tham gia và mức cần trợ giúp.
+  function homePanel(studentId) {
+    var hw = S.state.homework.filter(function (h) { return !studentId || h.studentId === studentId; });
+    var body;
+    if (!hw.length) {
+      body = '<p class="muted">Chưa giao gói 5 phút cùng con nào. <a href="#/tro-ly/phu-huynh">Soạn gói</a></p>';
+    } else {
+      var done = hw.filter(function (h) { return h.status === 'da-lam'; });
+      var notDone = hw.filter(function (h) { return h.status === 'chua-lam'; }).length;
+      var waiting = hw.length - done.length - notDone;
+      var max = Math.max(1, done.length);
+      body = '<p class="home-rate"><span class="num">' + ui.pct(done.length / hw.length) + '</span> lượt đã làm</p>' +
+        '<p class="muted">' + done.length + ' đã làm, ' + notDone + ' chưa làm, ' + waiting + ' chưa có phản hồi, trên ' + hw.length + ' lượt giao.</p>' +
+        '<h3 class="sub-title">Mức trợ giúp khi làm</h3><div class="err-chart">' + D.HOME_SUPPORT.map(function (o) {
+          var n = done.filter(function (h) { return h.support === o.id; }).length;
+          return '<div class="err-row"><span class="err-label">' + o.label + '</span><span class="err-track" tabindex="0" data-tip="' + ui.esc(o.label + ': ' + n + ' lượt') + '"><span class="err-fill is-home' + (n ? '' : ' is-zero') + '" style="width:' + Math.round(n / max * 100) + '%"></span></span><span class="err-val num">' + n + '</span></div>';
+        }).join('') + '</div>';
+    }
+    return '<section class="panel"><h2 class="panel-title">Luyện ở nhà</h2>' + body + '</section>';
+  }
+
+  // Học liệu AI: giáo viên sửa bao nhiêu, tiếng ngoài kho trước và sau khi duyệt.
+  function aiPanel() {
+    var items = S.state.library.filter(function (x) { return x.source === 'ai'; });
+    var body;
+    if (!items.length) {
+      body = '<p class="muted">Chưa có học liệu nào do AI soạn nháp. Học liệu soạn từ mẫu không tính ở đây.</p>';
+    } else {
+      var edits = items.reduce(function (n, x) { return n + (x.edits ? x.edits.length : 0); }, 0);
+      var withEdits = items.filter(function (x) { return x.edits && x.edits.length; }).length;
+      var outStart = items.reduce(function (n, x) { return n + (x.outsideStart || 0); }, 0);
+      var outEnd = items.reduce(function (n, x) { return n + (x.outsideEnd || 0); }, 0);
+      var minutes = avg(items.map(function (x) { return x.minutes || 0; }));
+      body = '<table class="table"><tbody>' +
+        '<tr><th scope="row">Học liệu AI đã duyệt</th><td class="num">' + items.length + '</td></tr>' +
+        '<tr><th scope="row">Cần giáo viên sửa</th><td class="num">' + withEdits + '/' + items.length + '</td></tr>' +
+        '<tr><th scope="row">Tổng số chỗ đã sửa</th><td class="num">' + edits + '</td></tr>' +
+        '<tr><th scope="row">Tiếng ngoài kho lúc nhận</th><td class="num">' + outStart + '</td></tr>' +
+        '<tr><th scope="row">Tiếng ngoài kho lúc duyệt</th><td class="num">' + outEnd + '</td></tr>' +
+        '<tr><th scope="row">Thời gian soạn và duyệt trung bình</th><td class="num">' + one(minutes) + ' phút</td></tr>' +
+        '</tbody></table><p class="muted">Xem từng chỗ sửa trong Kho học liệu, nút Xem.</p>';
+    }
+    return '<section class="panel"><h2 class="panel-title">Học liệu do AI soạn</h2>' + body + '</section>';
   }
 
   function classView() {
@@ -108,7 +153,8 @@
         }).join('') + '</tbody></table></div>' : '<p class="muted">Chưa có ghi nhận.</p>') +
       '<p class="muted">Thời gian thực tế tính cả phần sửa nội dung AI. Được ghi tự động khi duyệt học liệu và lưu phiếu đọc.</p></section>';
 
-    return stats + '<div class="two-col">' + '<section class="panel">' + prePostChart(null) + '</section>' + '<section class="panel">' + errorChart(null) + '</section></div>' + table + effort;
+    return stats + '<div class="two-col">' + '<section class="panel">' + prePostChart(null) + '</section>' + '<section class="panel">' + errorChart(null) + '</section></div>' + table +
+      '<div class="two-col">' + homePanel(null) + aiPanel() + '</div>' + effort;
   }
 
   function studentView(sid) {
@@ -132,7 +178,7 @@
       '</div>' +
       '<section class="panel"><h2 class="panel-title">Bản đồ âm vần</h2>' + mini + '<p class="muted">' + ui.esc(sug.reason) + '</p></section>' +
       '<div class="two-col"><section class="panel">' + prePostChart(sid) + '</section><section class="panel">' + errorChart(sid) + '</section></div>' +
-      (VV.assess.writingHistoryHTML(sid) || '') +
+      (VV.assess.writingHistoryHTML(sid) || '') + homePanel(sid) +
       '<section class="panel"><h2 class="panel-title">Đọc hiểu</h2>' +
       (comp.length ? '<ul class="plain-list">' + comp.map(function (c) {
         return '<li><span class="num">' + ui.fmtDate(c.date) + '</span> ' + ui.esc(c.textTitle) + ': <b class="num">' + c.correct + '/' + c.total + '</b> câu đúng, ' + (c.support === 'tu-doc' ? 'em tự đọc' : 'được đọc hỗ trợ') + '.</li>';

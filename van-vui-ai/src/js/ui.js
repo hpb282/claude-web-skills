@@ -37,7 +37,9 @@
     expand: '<path d="M15 3h6v6"/><path d="M9 21H3v-6"/><path d="M21 3l-7 7"/><path d="M3 21l7-7"/>',
     camera: '<path d="M3 7h4l2-3h6l2 3h4v13H3z"/><circle cx="12" cy="13" r="4"/>',
     alert: '<path d="M12 3 2 21h20z"/><path d="M12 10v4"/><path d="M12 17.5v.01"/>',
-    home: '<path d="M3 11 12 3l9 8"/><path d="M5 10v10h14V10"/>'
+    home: '<path d="M3 11 12 3l9 8"/><path d="M5 10v10h14V10"/>',
+    help: '<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6v.6"/><path d="M12 17v.01"/>',
+    qr: '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3z"/><path d="M20 14v.01"/><path d="M14 20h.01"/><path d="M17 20h4v-3"/>'
   };
   function icon(name, cls) {
     return '<svg class="icon ' + (cls || '') + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">' + (ICONS[name] || '') + '</svg>';
@@ -168,7 +170,13 @@
   var PCT_FMT = new Intl.NumberFormat('vi-VN', { style: 'percent', maximumFractionDigits: 0 });
   var DEC_FMT = new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 1 });
   function fmtDate(ts) { return DATE_FMT.format(new Date(ts)); }
-  function fmtShort(ts) { return SHORT_FMT.format(new Date(ts)); }
+  // Ngày tháng dạng 19/10, lấy từng phần từ Intl để đúng múi giờ và lịch của máy.
+  function fmtShort(ts) {
+    var parts = SHORT_FMT.formatToParts(new Date(ts));
+    var d = '', m = '';
+    parts.forEach(function (p) { if (p.type === 'day') d = p.value; if (p.type === 'month') m = p.value; });
+    return d + '/' + m;
+  }
   function pct(r) { return r == null ? '–' : PCT_FMT.format(r); }
   function dec(n) { return n == null ? '–' : DEC_FMT.format(n); }
 

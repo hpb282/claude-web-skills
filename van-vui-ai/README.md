@@ -33,7 +33,21 @@ Vào **Cài đặt, Kết nối AI**:
 | 2. Trò chơi tương tác | Nhận diện vần, ghép tiếng, chọn từ đúng, hoàn thành câu. Góc luyện tập toàn màn hình cho học sinh, có đọc mẫu bằng giọng tiếng Việt của máy. |
 | 3. Trợ lý tạo học liệu AI | Bài tập theo 3 mức (có hỗ trợ, tự thực hiện, vận dụng), truyện đúng vần, gói "5 phút cùng con" (bản điện thoại và bản giấy), phiếu luyện viết. Mọi tiếng ngoài kho bị đánh dấu; giáo viên sửa, duyệt rồi mới lưu vào kho học liệu. |
 | 4. Công cụ đánh giá | Phiếu đọc nhanh (màn hình cho học sinh, phím tắt D/S cho giáo viên), bài đo đọc A/B 20 tiếng, chấm bài viết theo tiêu chí kèm ảnh, đọc hiểu, nhật ký lỗi xuất CSV. |
-| 5. Báo cáo tiến bộ | Đầu vào so với đầu ra theo học sinh và nhóm vần, loại lỗi, bài viết đầu và mới nhất, công sức giáo viên. In báo cáo, xuất CSV. |
+| 5. Báo cáo tiến bộ | Đầu vào so với đầu ra theo học sinh và nhóm vần, loại lỗi, bài viết đầu và mới nhất, luyện ở nhà, học liệu do AI soạn, công sức giáo viên. In báo cáo, xuất CSV. |
+| Thẻ vần biết nói (Hướng 3) | Thẻ in kèm mã QR; điện thoại quét mở thẻ: đọc tiếng không dấu, thêm dấu, viết vào vở, chuyển sang thẻ khác hoặc luyện vần đó. |
+| Xưởng truyện đúng vần (Hướng 2) | Trợ lý soạn truyện theo kho tiếng, đánh dấu tiếng vượt nội dung đã học, giáo viên sửa rồi duyệt. |
+| Nét chữ lớn lên (Hướng 4) | Hồ sơ bài viết theo thời gian, so sánh bài đầu với bài mới nhất, gợi ý phiếu luyện viết theo tiêu chí còn yếu. |
+| 5 phút cùng con (Hướng 5) | Gói có bản điện thoại và bản giấy, giao về nhà cho từng em, ghi nhận đã làm hay chưa và mức cần trợ giúp, tính tỷ lệ tham gia. |
+| Minh chứng | Nhật ký chỉnh sửa học liệu AI (bản AI gốc, từng chỗ giáo viên sửa, tiếng ngoài kho lúc nhận và lúc duyệt), đối chiếu kết quả từng vần theo buổi, nhật ký công sức giáo viên. |
+| Hướng dẫn | Bắt đầu nhanh, chu trình Ghi nhận, Gợi ý, Đối chiếu, kịch bản trình diễn 3 phút có nút mở thẳng từng màn hình, phím tắt, câu hỏi thường gặp. |
+
+## Mã QR cho thẻ vần
+
+Mã QR chỉ mở được trên điện thoại khi file đã được đăng lên một địa chỉ web (GitHub Pages, Google Sites, máy chủ của trường…). Vào **Cài đặt → Mã QR**, dán địa chỉ, quét thử mã mẫu. Thẻ in ra từ trang Bài học sẽ có mã mở đúng thẻ đó. Mã QR được tạo ngay trong file, không cần mạng.
+
+## Sửa nội dung cho đúng bộ sách
+
+**Cài đặt → Nội dung bài học**: sửa tiếng (4 đến 8 tiếng mỗi vần), từ ngữ, câu và câu điền từ của từng nhóm. Tiếng sai vần sẽ bị chặn; câu có tiếng chưa học được cảnh báo. Có nút khôi phục nội dung gốc.
 
 ## Dữ liệu
 
@@ -52,13 +66,15 @@ src/
   index.html          khung trang
   css/app.css         giao diện, in ấn
   js/viet.js          tách tiếng thành âm đầu + vần + thanh, ghép tiếng, kiểm tra kho tiếng
+  js/qr.js            tạo mã QR không cần thư viện ngoài
   js/data.js          10 nhóm vần, tiếng, từ, câu
   js/store.js         lưu trữ, dữ liệu mẫu, bản đồ âm vần, gợi ý
   js/ai.js            gọi Claude / OpenAI / Gemini, soạn từ mẫu
   js/ui.js            hàm giao diện dùng chung
   js/app.js           điều hướng
   js/view-*.js        từng màn hình
-  js/games.js         trò chơi và Góc luyện tập
+  js/games.js         trò chơi, Góc luyện tập, thẻ vần mở từ mã QR
+  js/view-help.js     trang Hướng dẫn
 tools/build.py        gộp thành một file HTML
 tools/check-data.js   kiểm tra dữ liệu bài học
 dist/van-vui-ai.html  bản chạy trực tiếp

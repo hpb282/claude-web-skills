@@ -11,6 +11,7 @@
     { route: 'tro-ly', label: 'Trợ lý soạn bài', icon: 'pen' },
     { route: 'danh-gia', label: 'Đánh giá', icon: 'clipboard' },
     { route: 'bao-cao', label: 'Báo cáo tiến bộ', icon: 'chart' },
+    { route: 'huong-dan', label: 'Hướng dẫn', icon: 'help' },
     { route: 'cai-dat', label: 'Cài đặt', icon: 'gear' }
   ];
 
@@ -120,6 +121,12 @@
         if (mb) { mb.setAttribute('aria-expanded', open); mb.setAttribute('aria-label', open ? 'Đóng menu' : 'Mở menu'); }
       }
       if (what === 'close-dialog') ui.closeDialog();
+      if (what === 'compose-writing') {
+        // Từ hồ sơ bài viết: mở phiếu luyện viết, điền sẵn vần đang học và tiêu chí còn yếu.
+        var grp = VV.data.GROUPS[VV.store.state.classInfo.progress - 1];
+        var crit = g.getAttribute('data-crit');
+        VV.assistant.prefill('writing', { vans: grp.vans.slice(), errors: crit ? [crit + ' chưa đúng'] : [] });
+      }
     });
     document.addEventListener('keydown', function (e) {
       if (e.key === 'Escape' && document.body.classList.contains('nav-open')) document.body.classList.remove('nav-open');

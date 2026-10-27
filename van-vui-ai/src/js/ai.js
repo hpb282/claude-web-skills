@@ -255,8 +255,9 @@
       var w = words[(round * 2) % words.length];
       var parsed = VV.viet.parse(w);
       var others = g.vans.filter(function (v) { return v !== van; });
-      var d1 = g.words[others[0]][round % 6];
-      var d2 = g.words[others[1 % others.length]][(round + 3) % 6];
+      var w1 = g.words[others[0]], w2 = g.words[others[1 % others.length]];
+      var d1 = w1[round % w1.length];
+      var d2 = w2[(round + 3) % w2.length];
 
       out['ho-tro'].push({
         level: 'ho-tro', type: 'nhan-dien', van: van,

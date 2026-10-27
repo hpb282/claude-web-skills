@@ -26,7 +26,7 @@
     return {
       version: 1,
       isDemo: false,
-      classInfo: { name: 'Lớp 1', progress: 1, extraWords: [] },
+      classInfo: { name: 'Lớp 1', progress: 1, extraWords: [], siteUrl: '' },
       students: [],
       records: [],
       tests: [],
@@ -35,7 +35,9 @@
       practice: [],
       assignments: {},
       library: [],
-      effort: []
+      effort: [],
+      homework: [],
+      curriculum: {}
     };
   }
 
@@ -52,6 +54,7 @@
       try { state = JSON.parse(raw); } catch (e) { state = null; }
     }
     if (!state || state.version !== 1) state = buildDemo();
+    migrate(state);
     var s = safeGet(SETTINGS_KEY);
     settings = defaultSettings();
     if (s) {
@@ -62,6 +65,14 @@
       } catch (e) { /* giữ mặc định */ }
     }
     save();
+  }
+
+  // Bổ sung trường mới cho dữ liệu đã lưu từ bản trước.
+  function migrate(s) {
+    var base = emptyState();
+    Object.keys(base).forEach(function (k) { if (s[k] === undefined) s[k] = base[k]; });
+    Object.keys(base.classInfo).forEach(function (k) { if (s.classInfo[k] === undefined) s.classInfo[k] = base.classInfo[k]; });
+    D.applyOverrides(s.curriculum);
   }
 
   var saveFailed = false;
@@ -259,7 +270,8 @@
     while (pick.length < 20 && round < 3) {
       for (var i = 0; i < vans.length && pick.length < 20; i++) {
         var g = D.groupOfVan(vans[i]);
-        var w = g.words[vans[i]][(offset + round * 2) % 6];
+        var list = g.words[vans[i]];
+        var w = list[(offset + round * 2) % list.length];
         if (pick.indexOf(w) === -1) pick.push(w);
       }
       round++;
@@ -320,7 +332,7 @@
         for (var k = 0; k < n; k++) {
           var gp = prof.vans.indexOf(v) !== -1 ? 0.6 : 0.92;
           s.records.push({ id: uid('r'), studentId: stu.id, date: now - (2 + R() * 8) * DAY, phase: 'thuong-xuyen',
-            skill: 'nhan-dien', source: 'game', van: v, tieng: D.groupOfVan(v).words[v][k % 6], correct: R() < gp });
+            skill: 'nhan-dien', source: 'game', van: v, tieng: D.groupOfVan(v).words[v][k % D.groupOfVan(v).words[v].length], correct: R() < gp });
         }
       });
 
@@ -387,6 +399,38 @@
       }
     }];
 
+    // Bài tập do AI soạn, giáo viên đã sửa một chỗ (minh họa nhật ký chỉnh sửa).
+    var aiTasks = [
+      { _id: 'task-d1', level: 'ho-tro', type: 'nhan-dien', van: 'an', prompt: 'Nghe cô đọc, chọn tiếng có vần an.', question: 'Tiếng nào có vần an?', options: ['bàn', 'chăn', 'cân'], answer: 'bàn', teacherNote: 'Đọc mẫu vần an hai lần.' },
+      { _id: 'task-d2', level: 'tu-lam', type: 'hoan-thanh-cau', van: 'an', prompt: 'Chọn tiếng điền vào chỗ trống.', question: 'Bé đi ___ ở sân.', options: ['chơi', 'chăn', 'chân'], answer: 'chơi', teacherNote: '' },
+      { _id: 'task-d3', level: 'van-dung', type: 'doc', van: 'an', prompt: 'Đọc to cho cô nghe.', question: 'Bạn Lan có khăn đỏ.', options: [], answer: '', teacherNote: 'Ghi lại tiếng em đọc sai.' }
+    ];
+    var aiOriginal = JSON.parse(JSON.stringify(aiTasks));
+    aiOriginal[1].question = 'Bé đi ___ ở vườn.';
+    s.library.push({
+      id: 'lib-demo-ai', kind: 'bai-tap', title: 'Bài tập vần an', vans: ['an'], createdAt: now - 20 * DAY, approvedAt: now - 20 * DAY,
+      minutes: 14, source: 'ai', content: { tasks: aiTasks }, aiOriginal: { tasks: aiOriginal },
+      edits: [{ field: 'Nhiệm vụ 2, câu hỏi', before: 'Bé đi ___ ở vườn.', after: 'Bé đi ___ ở sân.' }], outsideStart: 1, outsideEnd: 0
+    });
+
+    // Gói 5 phút cùng con đã giao về nhà.
+    s.library.push({
+      id: 'lib-demo-home', kind: 'phu-huynh', title: '5 phút cùng con: vần an, ăn', vans: ['an', 'ăn'], createdAt: now - 9 * DAY, approvedAt: now - 9 * DAY,
+      minutes: 6, source: 'mau', edits: [],
+      content: {
+        title: '5 phút cùng con: vần an, ăn',
+        read3: ['Bố mẹ đọc mẫu vần an, ăn hai lần, con đọc theo.', 'Con đọc các tiếng dưới đây. Con đọc sai thì đọc mẫu lại, không chê.', 'Con đọc câu ngắn. Khen khi con tự đọc được.'],
+        readWords: ['bàn', 'bạn', 'chăn', 'khăn', 'Bạn Lan có khăn đỏ.'],
+        write2: 'Con viết 2 tiếng vào vở ô li, mỗi tiếng một dòng ngắn.',
+        writeWords: ['bàn', 'khăn'],
+        tips: ['Ngồi cạnh con, đọc chậm và rõ.', 'Chỉ luyện khoảng 5 phút, dừng khi con mệt.', 'Ghi lại tiếng con còn đọc sai để báo cô.'],
+        phone: 'Cô gửi gói 5 phút luyện vần an, ăn. Bố mẹ đọc mẫu, con đọc theo: bàn, bạn, chăn, khăn. Sau đó con viết 2 tiếng: bàn, khăn. Bố mẹ ghi lại tiếng con còn đọc sai giúp cô nhé.'
+      }
+    });
+    [['stu-1', 'da-lam', 'tu-lam'], ['stu-2', 'da-lam', 'lam-cung'], ['stu-4', 'chua-lam', ''], ['stu-6', 'da-lam', 'nhac-nho'], ['stu-7', 'da-giao', '']].forEach(function (h, i) {
+      s.homework.push({ id: 'hw-demo-' + i, packId: 'lib-demo-home', studentId: h[0], sentAt: now - 8 * DAY, status: h[1], support: h[2], note: '', updatedAt: now - (h[1] === 'da-giao' ? 8 : 4) * DAY });
+    });
+
     // Một em đã được giao bài.
     s.assignments['stu-1'] = { van: 'an', level: 'ho-tro', source: 'goi-y', date: now - DAY,
       reason: 'Giao theo gợi ý của bản đồ âm vần.' };
@@ -400,15 +444,16 @@
       var fresh = emptyState();
       Object.keys(fresh).forEach(function (k) { s[k] = fresh[k]; });
       if (cls) { s.classInfo = Object.assign({}, cls, { name: cls.name.replace(' (mẫu)', '') }); s.students = students; }
+      migrate(s);
     });
   }
   function resetToDemo() {
     var demo = buildDemo();
-    commit(function (s) { Object.keys(demo).forEach(function (k) { s[k] = demo[k]; }); });
+    commit(function (s) { Object.keys(demo).forEach(function (k) { s[k] = demo[k]; }); migrate(s); });
   }
   function importState(obj) {
     if (!obj || obj.version !== 1 || !Array.isArray(obj.students)) throw new Error('Tệp không đúng định dạng sao lưu của Vần vui AI.');
-    commit(function (s) { var base = emptyState(); Object.keys(base).forEach(function (k) { s[k] = obj[k] !== undefined ? obj[k] : base[k]; }); });
+    commit(function (s) { var base = emptyState(); Object.keys(base).forEach(function (k) { s[k] = obj[k] !== undefined ? obj[k] : base[k]; }); migrate(s); });
   }
 
   function storageSize() {
