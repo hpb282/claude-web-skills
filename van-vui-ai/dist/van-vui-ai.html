@@ -846,6 +846,66 @@ button.chip:active { transform: scale(.96); }
   .print-cards .card-qr .qr { width: 24mm; height: 24mm; }
 }
 
+/* ---------- Bổ sung: chương trình đầy đủ ---------- */
+.map-stage { border-radius: var(--r-tile); }
+.map-stage + .map-stage { margin-top: 4px; }
+.map-stage > summary {
+  list-style: none; cursor: pointer; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px;
+  background: var(--surface); border-radius: var(--r-btn); padding: 10px 14px; min-height: 44px;
+  box-shadow: inset 0 0 0 1px var(--line); transition: box-shadow .15s ease;
+}
+.map-stage > summary::-webkit-details-marker { display: none; }
+.map-stage > summary::before { content: ""; width: 8px; height: 8px; border-right: 2px solid var(--ink-2); border-bottom: 2px solid var(--ink-2); transform: rotate(-45deg); align-self: center; margin-right: 4px; transition: transform .15s ease; }
+.map-stage[open] > summary::before { transform: rotate(45deg); }
+.map-stage > summary:hover { box-shadow: inset 0 0 0 1px var(--ink-3); }
+.map-stage-name { font-weight: 700; }
+.map-stage-sum { font-size: 13px; color: var(--ink-2); }
+.map-stage[open] > summary { margin-bottom: 10px; }
+.map-stage .map-row + .map-row { margin-top: 10px; }
+.lesson-stage { display: grid; gap: 12px; }
+.stage-title { font-size: 19px; font-weight: 700; display: flex; align-items: baseline; gap: 10px; }
+.lesson-grid { grid-template-columns: repeat(auto-fill, minmax(min(100%, 170px), 1fr)); }
+.lesson-card { min-height: 128px; }
+.lesson-vans { font-size: 28px; }
+.group-list-wrap > summary { font-size: 15px; }
+.group-list { list-style: none; display: grid; max-height: 520px; overflow-y: auto; border: 1px solid var(--line); border-radius: var(--r-btn); margin: 8px 0 12px; overscroll-behavior: contain; }
+.group-item { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 8px 12px; align-items: center; padding: 4px 12px; border-top: 1px solid var(--line); }
+.group-item:first-child { border-top: 0; }
+.group-item .check { min-height: 40px; padding: 6px 0; font-size: 14px; }
+.group-item.is-hidden { background: var(--sunk); }
+.group-item.is-hidden .group-item-name { color: var(--ink-3); }
+.group-item-name { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 10px; min-width: 0; }
+.group-item-num { font-size: 13px; font-weight: 600; color: var(--ink-2); min-width: 64px; font-variant-numeric: tabular-nums; }
+.group-item-name .reading { font-size: 18px; font-weight: 700; }
+.group-item-stage { font-size: 12px; color: var(--ink-3); }
+.group-item-actions { display: flex; gap: 2px; align-items: center; }
+.group-item-actions .btn-icon:disabled { opacity: .3; cursor: default; }
+.content-form { display: grid; gap: 14px; padding-top: 12px; border-top: 1px solid var(--line); }
+.tone-style { padding-top: 12px; border-top: 1px solid var(--line); }
+@media (max-width: 600px) {
+  .group-item { grid-template-columns: minmax(0, 1fr) auto; }
+  .group-item .check { grid-column: 1 / -1; }
+}
+.group-list-wrap > summary { font-size: 15px; }
+.group-list { list-style: none; display: grid; max-height: 520px; overflow-y: auto; border: 1px solid var(--line); border-radius: var(--r-btn); margin: 8px 0 12px; overscroll-behavior: contain; }
+.group-item { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 8px 12px; align-items: center; padding: 4px 12px; border-top: 1px solid var(--line); }
+.group-item:first-child { border-top: 0; }
+.group-item .check { min-height: 40px; padding: 6px 0; font-size: 14px; }
+.group-item.is-hidden { background: var(--sunk); }
+.group-item.is-hidden .group-item-name { color: var(--ink-3); }
+.group-item-name { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 10px; min-width: 0; }
+.group-item-num { font-size: 13px; font-weight: 600; color: var(--ink-2); min-width: 64px; font-variant-numeric: tabular-nums; }
+.group-item-name .reading { font-size: 18px; font-weight: 700; }
+.group-item-stage { font-size: 12px; color: var(--ink-3); }
+.group-item-actions { display: flex; gap: 2px; align-items: center; }
+.group-item-actions .btn-icon:disabled { opacity: .3; cursor: default; }
+.content-form { display: grid; gap: 14px; padding-top: 12px; border-top: 1px solid var(--line); }
+.tone-style { padding-top: 12px; border-top: 1px solid var(--line); }
+@media (max-width: 600px) {
+  .group-item { grid-template-columns: minmax(0, 1fr) auto; }
+  .group-item .check { grid-column: 1 / -1; }
+}
+
 </style>
 </head>
 <body>
@@ -913,17 +973,22 @@ button.chip:active { transform: scale(.96); }
     }
     var rest = base.slice(initial.length);
 
-    // "gi": gì = gi + i; gìn = gi + in; gia = gi + a.
+    // "gi": gì = gi + i; gìn = gi + in; gia = gi + a; giếng = gi + iêng (chữ i được lược bớt).
     if (initial === 'gi') {
-      if (rest === '' || !isVowel(rest[0])) rest = 'i' + rest;
+      if (rest === '' || !isVowel(rest[0]) || rest[0] === 'ê') rest = 'i' + rest;
     }
     // Không bắt đầu bằng nguyên âm: không phải tiếng (ví dụ "ng").
     if (!rest || !isVowel(rest[0])) return null;
     return { initial: initial, van: rest, tone: tone, base: base, word: String(word).toLowerCase() };
   }
 
+  // Cách đặt dấu với oa, oe, uy không có âm cuối: 'moi' (hoà, khoẻ, thuỷ) hoặc 'cu' (hòa, khỏe, thủy).
+  var toneStyle = 'moi';
+  function setToneStyle(s) { toneStyle = s === 'cu' ? 'cu' : 'moi'; }
+
   // Chọn nguyên âm mang dấu thanh trong vần (quy tắc đơn giản, đủ cho vần lớp 1).
   function toneIndex(van) {
+    if (toneStyle === 'moi' && (van === 'oa' || van === 'oe' || van === 'uy')) return 1;
     var uo = van.indexOf('ươ');
     if (uo !== -1) return uo + 1;
     for (var i = 0; i < van.length; i++) if (MARKED_VOWELS.indexOf(van[i]) !== -1) return i;
@@ -970,7 +1035,7 @@ button.chip:active { transform: scale(.96); }
       var p = parse(lower);
       t.parsed = p;
       if (kho.extra && kho.extra.has(lower)) { t.ok = true; return; }
-      t.ok = !!(p && kho.vans.has(p.van));
+      t.ok = !!(p && kho.vans.has(p.van) && (!kho.initials || !p.initial || kho.initials.has(p.initial)));
       if (!t.ok && outside.indexOf(lower) === -1) outside.push(lower);
     });
     return { tokens: tokens, outside: outside };
@@ -1006,6 +1071,7 @@ button.chip:active { transform: scale(.96); }
 
   VV.viet = {
     isStopVan: isStopVan,
+    setToneStyle: setToneStyle,
     validTones: validTones,
     toneDistractors: toneDistractors,
     parse: parse,
@@ -1251,7 +1317,7 @@ button.chip:active { transform: scale(.96); }
 </script>
 <script>
 /* js/data.js */
-/* Dữ liệu chương trình: 10 nhóm vần, tiếng, từ, câu, câu điền từ. Chỉ dùng vần đã học tới nhóm đó. */
+/* Dữ liệu chương trình lớp 1: phần âm và các nhóm vần (tiếng, từ, câu, câu điền từ). Mỗi nhóm chỉ dùng âm, vần đã học tới nhóm đó. */
 (function (VV) {
   'use strict';
 
@@ -1403,22 +1469,230 @@ button.chip:active { transform: scale(.96); }
     }
   ];
 
-  GROUPS.forEach(function (g) { g.title = g.vans.join(', '); });
-
-  // Bản gốc để khôi phục; giáo viên có thể sửa tiếng, từ, câu cho khớp bộ sách của trường.
-  var DEFAULTS = JSON.parse(JSON.stringify(GROUPS));
-  function clone(x) { return JSON.parse(JSON.stringify(x)); }
-  function applyOverrides(ov) {
-    GROUPS.forEach(function (g, i) {
-      var d = DEFAULTS[i], o = (ov && ov[g.id]) || {};
-      g.words = clone(o.words || d.words);
-      g.vans.forEach(function (v) { if (!g.words[v] || !g.words[v].length) g.words[v] = clone(d.words[v]); });
-      g.phrases = clone(o.phrases || d.phrases);
-      g.sentences = clone(o.sentences || d.sentences);
-      g.fill = clone(o.fill || d.fill);
-    });
+  // ---------- Bổ sung: phần âm và các vần còn lại của lớp 1 ----------
+  // G(khóa, loại, giai đoạn, {đơn vị: [tiếng]}, [từ ngữ], [câu], ['câu có ___ | lựa chọn | đáp án'])
+  function G(key, kind, stage, words, phrases, sentences, fills) {
+    return {
+      key: key, kind: kind, stage: stage, vans: Object.keys(words), words: words,
+      phrases: phrases, sentences: sentences,
+      fill: (fills || []).map(function (ln) {
+        var p = ln.split('|').map(function (x) { return x.trim(); });
+        return { text: p[0], options: p[1].split(',').map(function (x) { return x.trim(); }), answer: p[2] };
+      })
+    };
   }
-  function defaultsOf(id) { return clone(DEFAULTS[id - 1]); }
+
+  var AM_GROUPS = [
+    G('am-1', 'am', 'am', { a: ['bà', 'ba', 'cá', 'cà'], b: ['ba', 'bà', 'bá', 'bã'], c: ['ca', 'cà', 'cá', 'cả'] },
+      ['ba ba', 'bà ba'], [], []),
+    G('am-2', 'am', 'am', { e: ['be', 'bé', 'bè', 'bẻ'], 'ê': ['bê', 'bế', 'bể', 'bề'], o: ['bò', 'bó', 'cò', 'có', 'cỏ'], 'ô': ['bố', 'bổ', 'cô', 'cổ', 'bộ'] },
+      ['cô bé', 'bế bé', 'bó cỏ', 'cổ cò', 'bò bê'], ['Bố bế bé.', 'Bé có bê.', 'Cô có cá.'],
+      ['Cô bế ___. | bé, bò, bể | bé']),
+    G('am-3', 'am', 'am', { 'ơ': ['bơ', 'bờ', 'cờ', 'đỡ', 'dở'], d: ['da', 'dê', 'dế', 'dỗ'], 'đ': ['đá', 'đò', 'đỗ', 'đê'] },
+      ['bờ đê', 'dỗ bé', 'đỗ đỏ', 'da dê'], ['Bé có cờ đỏ.', 'Bố dỗ bé.', 'Dê ở bờ đê.'],
+      ['Bé có cờ ___. | đỏ, đá, đò | đỏ', 'Dê ở bờ ___. | đê, dê, đỗ | đê']),
+    G('am-4', 'am', 'am', { i: ['bi', 'bí', 'đi', 'dì', 'li'], k: ['kê', 'kẻ', 'kế', 'kì'], h: ['hè', 'hồ', 'hổ', 'hà'], l: ['lá', 'lê', 'lọ', 'lò'] },
+      ['lá cờ', 'bờ hồ', 'bí đỏ', 'hồ cá'], ['Bé có bi.', 'Bé đi bờ hồ.', 'Dì có bí đỏ.'],
+      ['Dì có ___ đỏ. | bí, bé, bò | bí', 'Bé đi bờ ___. | hồ, hổ, hè | hồ']),
+    G('am-5', 'am', 'am', { u: ['cụ', 'củ', 'đu', 'bú', 'hũ'], 'ư': ['cừ', 'cử', 'dữ', 'hư'], ch: ['chó', 'chè', 'chả', 'chợ', 'chú'], kh: ['khế', 'khỉ', 'kho', 'khô', 'khá'] },
+      ['chú khỉ', 'cá kho', 'chả cá', 'lá khế'], ['Chú khỉ có khế.', 'Bà đi chợ.', 'Bố có chó.'],
+      ['Bà đi ___. | chợ, chó, chè | chợ', 'Chú khỉ có ___. | khế, khô, kho | khế']),
+    G('am-6', 'am', 'am', { m: ['mẹ', 'mè', 'mũ', 'mơ', 'mì'], n: ['nơ', 'na', 'no', 'nụ'], g: ['gà', 'gỗ', 'gõ', 'ga'], gi: ['giá', 'giỏ', 'giữ', 'giò'] },
+      ['gà mẹ', 'giỏ cá', 'cá mè', 'giò chả', 'nơ đỏ'], ['Mẹ đi chợ.', 'Bé có nơ đỏ.', 'Mẹ có giỏ cá.'],
+      ['Bé có ___ đỏ. | nơ, na, no | nơ', 'Mẹ có ___ cá. | giỏ, gỗ, giữ | giỏ']),
+    G('am-7', 'am', 'am', { gh: ['ghế', 'ghi', 'ghẹ', 'ghé'], nh: ['nhà', 'nhỏ', 'nho', 'nhớ'], ng: ['ngõ', 'ngô', 'ngà', 'ngủ'], ngh: ['nghé', 'nghe', 'nghề', 'nghỉ'] },
+      ['nhà bà', 'ghế gỗ', 'ngõ nhỏ', 'bé ngủ', 'nho khô'], ['Nhà bà có ghế gỗ.', 'Bé nghe mẹ.', 'Ngõ nhà bé nhỏ.'],
+      ['Nhà bà có ___ gỗ. | ghế, ghé, ghi | ghế', 'Bé ___ mẹ. | nghe, nghé, ngõ | nghe']),
+    G('am-8', 'am', 'am', { r: ['rổ', 'rễ', 'rá', 'rẽ'], s: ['số', 'sẻ', 'sò', 'sổ'], t: ['tô', 'tủ', 'tí', 'tổ', 'to'], tr: ['tre', 'trà', 'trê', 'trụ'] },
+      ['rổ rá', 'cá trê', 'tủ gỗ', 'số ba', 'cá rô'], ['Bà có rổ cá rô.', 'Tủ nhà bé to.', 'Bà có trà.'],
+      ['Bà có rổ cá ___. | rô, rổ, rễ | rô', 'Tủ nhà bé ___. | to, tô, tơ | to']),
+    G('am-9', 'am', 'am', { th: ['thỏ', 'thư', 'thả', 'thợ'], ia: ['mía', 'tía', 'kìa', 'chia'], ua: ['cua', 'rùa', 'mua', 'đũa'], 'ưa': ['dừa', 'cửa', 'mưa', 'sữa'] },
+      ['cua đá', 'sữa chua', 'cửa sổ', 'cá thu'], ['Mẹ mua cua.', 'Bà cho bé mía.', 'Mưa to.'],
+      ['Mẹ đi chợ mua ___. | cua, cửa, của | cua', 'Bà cho bé ___. | mía, mưa, mua | mía']),
+    G('am-10', 'am', 'am', { ph: ['phở', 'phố', 'pha', 'phà'], qu: ['quả', 'quê', 'quà', 'quạ'], v: ['vé', 'vở', 'vẽ', 'võ'], x: ['xe', 'xa', 'xô', 'xẻ'] },
+      ['phố cổ', 'quả na', 'vở ô li', 'quà quê', 'phở bò'], ['Bố đi phố.', 'Bé có vở.', 'Bà cho bé quà.', 'Bé vẽ xe.'],
+      ['Bà cho bé ___. | quà, quả, quạ | quà', 'Bé có ___ ô li. | vở, vẽ, võ | vở'])
+  ];
+
+  var NEW_VAN = {
+    'v-om': G('v-om', 'van', 'van1', { om: ['xóm', 'nhóm', 'khóm', 'chòm', 'gom'], 'ôm': ['tôm', 'cốm', 'đốm', 'gốm', 'chôm'], 'ơm': ['cơm', 'rơm', 'thơm', 'sớm', 'bờm'] },
+      ['con tôm', 'cơm nắm', 'rơm khô', 'thơm ngon', 'chôm chôm', 'đồ gốm'], ['Bà cho bé cốm.', 'Bé ăn cơm và tôm.', 'Ở xóm, bà có chôm chôm.'],
+      ['Bé ăn cơm và ___. | tôm, cốm, xóm | tôm', 'Ở xóm, bà có ___ chôm. | chôm, chòm, chơm | chôm']),
+    'v-em': G('v-em', 'van', 'van1', { em: ['kem', 'tem', 'nem', 'xem', 'thèm'], 'êm': ['đêm', 'nệm', 'thềm', 'mềm', 'êm'], im: ['chim', 'kim', 'tim', 'sim', 'phim'], um: ['chùm', 'chum', 'cúm', 'xúm', 'hùm'] },
+      ['que kem', 'tem thư', 'êm ả', 'chim sẻ', 'kim chỉ', 'chùm nho', 'nệm êm'], ['Bé ăn kem.', 'Mẹ có kim chỉ.', 'Đêm, bé ngủ trên nệm êm.'],
+      ['Bé ăn ___. | kem, kim, kèm | kem', 'Mẹ có ___ chỉ. | kim, kem, chim | kim']),
+    'v-ui': G('v-ui', 'van', 'van1', { ui: ['núi', 'túi', 'mũi', 'bụi', 'củi', 'vui'], 'ưi': ['gửi', 'ngửi', 'cửi'] },
+      ['đồi núi', 'túi vải', 'cái mũi', 'vui vẻ', 'gửi thư', 'ngửi mùi'], ['Bé vui vẻ.', 'Bà gửi quà cho bé.', 'Mũi bé ngửi mùi thơm.'],
+      ['Bà ___ quà cho bé. | gửi, ngửi, núi | gửi', 'Bé ___ vẻ. | vui, vùi, vai | vui']),
+    'v-eu': G('v-eu', 'van', 'van1', { 'êu': ['kêu', 'sếu', 'lều', 'phễu', 'rêu'], iu: ['rìu', 'địu', 'níu', 'dịu', 'chịu'], 'ưu': ['cừu', 'lựu', 'hưu', 'bưu'] },
+      ['cái lều', 'cái rìu', 'quả lựu', 'con cừu', 'kêu gọi'], ['Mẹ địu bé.', 'Con cừu kêu be be.', 'Bà cho bé quả lựu.'],
+      ['Mẹ ___ bé. | địu, đều, đậu | địu', 'Bà cho bé quả ___. | lựu, lều, lâu | lựu']),
+    'v-oc': G('v-oc', 'van', 'van1', { oc: ['sóc', 'cóc', 'móc', 'học', 'đọc'], 'ôc': ['cốc', 'ốc', 'gốc', 'dốc', 'mốc'], uc: ['cúc', 'xúc', 'chục', 'trúc', 'lúc'], 'ưc': ['mực', 'lực', 'rực', 'thức', 'đực'] },
+      ['con sóc', 'đi học', 'cái cốc', 'cúc áo', 'con mực', 'thức dậy', 'gốc cây'], ['Bé đi học.', 'Chú sóc leo cây.', 'Mẹ đọc cho bé nghe.'],
+      ['Bé đi ___. | học, hộc, hục | học', 'Chú ___ leo cây. | sóc, súc, sốc | sóc']),
+    'v-ot': G('v-ot', 'van', 'van1', { ot: ['hót', 'ngọt', 'rót', 'bọt', 'lọt'], 'ôt': ['cột', 'một', 'tốt', 'bột', 'đốt'], 'ơt': ['ớt', 'vợt', 'thớt', 'bớt'] },
+      ['chim hót', 'kẹo ngọt', 'cột cờ', 'bột mì', 'quả ớt', 'cái vợt'], ['Chim hót trên cây.', 'Mẹ rót trà.', 'Bé có một cái vợt.'],
+      ['Chim ___ trên cây. | hót, hột, hớt | hót', 'Bé có một cái ___. | vợt, vọt, vột | vợt']),
+    'v-et': G('v-et', 'van', 'van1', { et: ['vẹt', 'két', 'hét', 'sét', 'mét'], 'êt': ['tết', 'dệt', 'mệt', 'rết', 'hết'], it: ['vịt', 'mít', 'thịt', 'ít', 'hít'], ut: ['bút', 'phút', 'hút', 'sút', 'mút'], 'ưt': ['nứt', 'mứt', 'đứt', 'sứt'] },
+      ['con vẹt', 'ngày tết', 'con vịt', 'quả mít', 'cái bút', 'mứt dừa'], ['Tết, bé ăn mứt.', 'Bé có cái bút.', 'Con vịt bơi.'],
+      ['Bé có cái ___. | bút, bít, bét | bút', 'Con ___ bơi. | vịt, vẹt, vụt | vịt']),
+    'v-ap': G('v-ap', 'van', 'van1', { ap: ['tháp', 'đạp', 'sạp', 'nạp'], 'ăp': ['cặp', 'sắp', 'bắp', 'gặp', 'nắp'], 'âp': ['tập', 'nấp', 'mập', 'đập', 'cấp'] },
+      ['xe đạp', 'cái tháp', 'cặp da', 'bắp ngô', 'tập vở', 'nắp nồi'], ['Bố đi xe đạp.', 'Bé tập vẽ.', 'Mẹ gặp cô giáo.'],
+      ['Bố đi xe ___. | đạp, đập, đắp | đạp', 'Bé ___ vẽ. | tập, táp, tắp | tập']),
+    'v-op': G('v-op', 'van', 'van1', { op: ['họp', 'góp', 'cọp', 'chóp'], 'ôp': ['hộp', 'lốp', 'xốp', 'tốp'], 'ơp': ['lớp', 'chớp', 'đớp', 'lợp'] },
+      ['con cọp', 'họp lớp', 'hộp bút', 'lốp xe', 'tia chớp', 'góp ý'], ['Bé có hộp bút.', 'Bố thay lốp xe.', 'Cá đớp mồi.'],
+      ['Bé có ___ bút. | hộp, họp, hợp | hộp', 'Bố thay ___ xe. | lốp, lớp, lọp | lốp']),
+    'v-ep': G('v-ep', 'van', 'van1', { ep: ['dép', 'kẹp', 'đẹp', 'chép', 'tép'], 'êp': ['bếp', 'xếp', 'nếp'], ip: ['kịp', 'nhịp', 'híp'], up: ['búp', 'chụp', 'húp', 'núp', 'giúp'] },
+      ['đôi dép', 'cái kẹp', 'gian bếp', 'xếp đồ', 'búp bê', 'giúp đỡ'], ['Bé có đôi dép đẹp.', 'Mẹ nấu cơm ở bếp.', 'Bé giúp mẹ xếp đồ.'],
+      ['Bé có đôi ___ đẹp. | dép, dẹp, dịp | dép', 'Mẹ nấu cơm ở ___. | bếp, bép, búp | bếp']),
+    'v-anh': G('v-anh', 'van', 'van1', { anh: ['chanh', 'xanh', 'canh', 'tranh', 'bánh'], 'ênh': ['kênh', 'bệnh', 'lênh', 'chênh'], inh: ['kính', 'xinh', 'tính', 'bình', 'đỉnh'] },
+      ['quả chanh', 'bánh mì', 'con kênh', 'xinh xắn', 'kính mắt', 'bức tranh'], ['Bé có cái kính.', 'Mẹ nấu canh chua.', 'Bé vẽ tranh.', 'Lá cây xanh.'],
+      ['Bé vẽ ___. | tranh, trinh, xinh | tranh', 'Mẹ nấu ___ chua. | canh, kênh, kính | canh']),
+    'v-ach': G('v-ach', 'van', 'van1', { ach: ['sách', 'vách', 'gạch', 'khách', 'mạch'], 'êch': ['ếch', 'lệch', 'chếch'], ich: ['lịch', 'xích', 'thích', 'kịch'] },
+      ['cặp sách', 'gạch đỏ', 'con ếch', 'tờ lịch', 'xích đu'], ['Bé thích đọc sách.', 'Con ếch nhảy.', 'Nhà bé có khách.'],
+      ['Bé thích đọc ___. | sách, sạch, xích | sách', 'Con ___ nhảy. | ếch, ách, ích | ếch']),
+    'v-ong': G('v-ong', 'van', 'van1', { ong: ['bóng', 'cong', 'võng', 'ong', 'sóng'], 'ông': ['ông', 'công', 'sông', 'bông', 'hồng'], ung: ['súng', 'cung', 'thùng', 'nhung', 'rung'], 'ưng': ['trứng', 'lưng', 'gừng', 'mừng', 'sừng'] },
+      ['quả bóng', 'con ong', 'bông hồng', 'dòng sông', 'thùng gỗ', 'quả trứng'], ['Ông cho bé quả bóng.', 'Đàn ong bay.', 'Mẹ mua trứng gà.'],
+      ['Ông cho bé quả ___. | bóng, bông, bỏng | bóng', 'Mẹ mua ___ gà. | trứng, trưng, trống | trứng']),
+    'v-ien': G('v-ien', 'van', 'van2', { 'iên': ['tiên', 'biển', 'điện', 'kiến', 'tiền'], 'yên': ['yên', 'yến'], 'iêt': ['biết', 'viết', 'việt', 'tiết'] },
+      ['bờ biển', 'cô tiên', 'đèn điện', 'con kiến', 'chim yến', 'yên xe', 'tập viết'], ['Bé tập viết.', 'Bố đưa bé ra biển.', 'Con kiến bé tí.'],
+      ['Bé tập ___. | viết, vết, vịt | viết', 'Bố đưa bé ra ___. | biển, kiến, tiền | biển']),
+    'v-ieng': G('v-ieng', 'van', 'van2', { 'iêng': ['chiêng', 'kiềng', 'siêng', 'giếng', 'miếng'], 'iêc': ['tiệc', 'việc', 'xiếc', 'chiếc'], 'iêm': ['kiếm', 'diêm', 'tiêm', 'liềm'], 'iêp': ['tiếp', 'nghiệp', 'diếp'] },
+      ['cái giếng', 'miếng bánh', 'rạp xiếc', 'bữa tiệc', 'que diêm', 'rau diếp'], ['Bé đi xem xiếc.', 'Bé chăm chỉ, siêng năng.', 'Mẹ cho bé miếng bánh.'],
+      ['Bé đi xem ___. | xiếc, tiệc, xiêng | xiếc', 'Mẹ cho bé ___ bánh. | miếng, miệng, tiếng | miếng']),
+    'v-ieu': G('v-ieu', 'van', 'van2', { 'iêu': ['diều', 'tiêu', 'chiếu', 'phiếu', 'siêu'], 'yêu': ['yêu', 'yếu'] },
+      ['cánh diều', 'hạt tiêu', 'chiếu cói', 'yêu quý', 'yếu ớt'], ['Bé thả diều.', 'Bé yêu mẹ.', 'Bà trải chiếu.'],
+      ['Bé thả ___. | diều, điều, đều | diều', 'Bé ___ mẹ. | yêu, yếu, yếm | yêu']),
+    'v-uon': G('v-uon', 'van', 'van2', { 'uôn': ['muốn', 'cuộn', 'chuồn', 'luôn', 'buồn'], 'uông': ['chuông', 'xuồng', 'muống', 'luống', 'buồng'], 'uôt': ['chuột', 'nuốt', 'suốt', 'ruột'], 'uôc': ['thuốc', 'cuốc', 'buộc', 'luộc', 'đuốc'] },
+      ['chuồn chuồn', 'cuộn len', 'cái chuông', 'rau muống', 'con chuột', 'trứng luộc'], ['Mẹ luộc rau muống.', 'Chuông reo.', 'Con mèo bắt chuột.'],
+      ['Mẹ luộc rau ___. | muống, muốn, muộn | muống', 'Con mèo bắt ___. | chuột, chuộc, chuồn | chuột']),
+    'v-uoi': G('v-uoi', 'van', 'van2', { 'uôi': ['chuối', 'muối', 'suối', 'tuổi', 'cuối'], 'uôm': ['buồm', 'nhuộm', 'muỗm'] },
+      ['quả chuối', 'con suối', 'cánh buồm', 'nhuộm vải'], ['Bé ăn chuối.', 'Bé lên sáu tuổi.', 'Cánh buồm trắng.'],
+      ['Bé ăn ___. | chuối, chồi, chối | chuối', 'Bé lên sáu ___. | tuổi, tươi, tối | tuổi']),
+    'v-uon2': G('v-uon2', 'van', 'van2', { 'ươn': ['vườn', 'lươn', 'mượn', 'vượn', 'sườn'], 'ương': ['gương', 'giường', 'đường', 'sương', 'hương'], 'ươt': ['lướt', 'trượt', 'mượt', 'rượt'], 'ươc': ['nước', 'bước', 'thước', 'lược', 'rước'] },
+      ['khu vườn', 'con lươn', 'con đường', 'cái gương', 'thước kẻ', 'cái lược'], ['Bé ra vườn.', 'Bé uống nước.', 'Bé chải tóc bằng lược.'],
+      ['Bé uống ___. | nước, nướng, mượt | nước', 'Bé ra ___. | vườn, vượn, vương | vườn']),
+    'v-uoi2': G('v-uoi2', 'van', 'van2', { 'ươi': ['lưới', 'tươi', 'cười', 'mười', 'bưởi'], 'ươu': ['hươu', 'bướu', 'khướu'], 'ươm': ['bướm', 'gươm', 'lượm', 'cườm'], 'ươp': ['mướp', 'ướp'] },
+      ['quả bưởi', 'con hươu', 'con bướm', 'quả mướp', 'cá ướp'], ['Bé cười tươi.', 'Con bướm bay.', 'Bà cho bé quả bưởi.'],
+      ['Con ___ bay. | bướm, bướu, buồm | bướm', 'Bà cho bé quả ___. | bưởi, bướm, buổi | bưởi']),
+    'v-oa': G('v-oa', 'van', 'van3', { oa: ['hoa', 'loa', 'toa', 'xoa', 'khoa'], oe: ['xoe', 'loe', 'khoe', 'hoe'] },
+      ['bông hoa', 'cái loa', 'toa tàu', 'tròn xoe'], ['Mẹ mua hoa.', 'Mắt bé tròn xoe.', 'Bé khoe bức tranh.'],
+      ['Mẹ mua ___. | hoa, hoe, xoe | hoa', 'Mắt bé tròn ___. | xoe, xoa, khoe | xoe']),
+    'v-oan': G('v-oan', 'van', 'van3', { oan: ['ngoan', 'khoan', 'toán', 'đoàn', 'loan'], 'oăn': ['xoăn', 'ngoằn', 'thoăn'], oat: ['hoạt', 'thoát', 'loát', 'soát'], 'oăt': ['loắt', 'choắt', 'thoắt'] },
+      ['bé ngoan', 'học toán', 'tóc xoăn', 'hoạt hình', 'thoăn thoắt', 'loắt choắt'], ['Bé ngoan, học giỏi.', 'Tóc bé xoăn.', 'Bé xem hoạt hình.'],
+      ['Bé ___, học giỏi. | ngoan, ngon, ngoằn | ngoan', 'Tóc bé ___. | xoăn, ngoan, khoan | xoăn']),
+    'v-oai': G('v-oai', 'van', 'van3', { oai: ['ngoài', 'xoài', 'khoai', 'loài'], oay: ['xoáy', 'ngoáy', 'loay', 'hoay'] },
+      ['quả xoài', 'củ khoai', 'ngoài sân', 'loay hoay', 'xoáy nước'], ['Bé ăn xoài.', 'Bé chơi ở ngoài sân.', 'Bà luộc khoai.'],
+      ['Bé ăn ___. | xoài, xoáy, ngoáy | xoài', 'Bà luộc ___. | khoai, khoái, khay | khoai']),
+    'v-oang': G('v-oang', 'van', 'van3', { oang: ['hoàng', 'khoang', 'choàng', 'loáng'], 'oăng': ['hoẵng', 'ngoẵng', 'loằng'], oanh: ['khoanh', 'doanh', 'loanh'], oach: ['hoạch', 'xoạch'] },
+      ['áo choàng', 'khoanh tay', 'kế hoạch', 'loanh quanh', 'dài ngoẵng'], ['Bé khoanh tay.', 'Bé mặc áo choàng.', 'Cổ hươu dài ngoẵng.'],
+      ['Bé ___ tay. | khoanh, khoang, khanh | khoanh', 'Bé mặc áo ___. | choàng, chàng, choàn | choàng']),
+    'v-uy': G('v-uy', 'van', 'van3', { 'uê': ['huệ', 'thuê', 'thuế'], uy: ['huy', 'khuy', 'tuy', 'suy', 'duy'], 'uơ': ['huơ', 'thuở'] },
+      ['hoa huệ', 'khuy áo', 'huơ tay', 'thuở bé'], ['Mẹ mua hoa huệ.', 'Bé cài khuy áo.', 'Bé huơ tay.'],
+      ['Bé cài ___ áo. | khuy, khui, khuê | khuy', 'Mẹ mua hoa ___. | huệ, huy, hoe | huệ']),
+    'v-uan': G('v-uan', 'van', 'van3', { 'uân': ['xuân', 'tuần', 'huấn', 'luận'], 'uât': ['thuật', 'xuất', 'luật', 'khuất'], uynh: ['huynh', 'khuỳnh'], uych: ['huých', 'huỵch'] },
+      ['mùa xuân', 'tuần lễ', 'phụ huynh', 'kĩ thuật', 'luật lệ'], ['Mùa xuân, cây ra lá.', 'Phụ huynh đến lớp.'],
+      ['Mùa ___, cây ra lá. | xuân, xuất, xoan | xuân']),
+    'v-uyen': G('v-uyen', 'van', 'van3', { 'uyên': ['thuyền', 'chuyện', 'khuyên', 'truyện', 'luyện'], 'uyêt': ['tuyết', 'khuyết', 'duyệt'] },
+      ['con thuyền', 'kể chuyện', 'truyện tranh', 'bông tuyết', 'trăng khuyết'], ['Bà kể chuyện cho bé nghe.', 'Con thuyền trên sông.', 'Bé thích đọc truyện.'],
+      ['Bà kể ___ cho bé nghe. | chuyện, thuyền, tuyết | chuyện', 'Con ___ trên sông. | thuyền, thuyết, tuyền | thuyền'])
+  };
+
+  // Khóa ổn định của 10 nhóm có từ bản đầu (dùng để chuyển dữ liệu cũ).
+  var LEGACY_KEYS = ['v-an', 'v-on', 'v-en', 'v-am', 'v-ai', 'v-oi', 'v-ao', 'v-at', 'v-ac', 'v-ang'];
+  GROUPS.forEach(function (g, i) { g.key = LEGACY_KEYS[i]; g.kind = 'van'; g.stage = 'van1'; delete g.id; });
+  var LEGACY = {};
+  GROUPS.forEach(function (g) { LEGACY[g.key] = g; });
+
+  // Thứ tự gợi ý, gần với tiến độ phổ biến của sách lớp 1. Giáo viên đổi được trong Cài đặt.
+  var DEFAULT_ORDER = ['am-1', 'am-2', 'am-3', 'am-4', 'am-5', 'am-6', 'am-7', 'am-8', 'am-9', 'am-10',
+    'v-an', 'v-on', 'v-en', 'v-am', 'v-om', 'v-em', 'v-ai', 'v-oi', 'v-ui', 'v-ao', 'v-eu',
+    'v-ac', 'v-oc', 'v-at', 'v-ot', 'v-et', 'v-ap', 'v-op', 'v-ep', 'v-anh', 'v-ach', 'v-ang', 'v-ong',
+    'v-ien', 'v-ieng', 'v-ieu', 'v-uon', 'v-uoi', 'v-uon2', 'v-uoi2',
+    'v-oa', 'v-oan', 'v-oai', 'v-oang', 'v-uy', 'v-uan', 'v-uyen'];
+
+  var STAGES = [
+    { id: 'am', label: 'Âm và chữ ghi âm' },
+    { id: 'van1', label: 'Vần cơ bản' },
+    { id: 'van2', label: 'Vần có iê, uô, ươ' },
+    { id: 'van3', label: 'Vần có âm đệm (oa, uê, uy…)' },
+    { id: 'tu-them', label: 'Nhóm giáo viên thêm' }
+  ];
+
+  var CATALOG = {};
+  AM_GROUPS.forEach(function (g) { CATALOG[g.key] = g; });
+  Object.keys(NEW_VAN).forEach(function (k) { CATALOG[k] = NEW_VAN[k]; });
+  Object.keys(LEGACY).forEach(function (k) { CATALOG[k] = LEGACY[k]; });
+
+  function clone(x) { return JSON.parse(JSON.stringify(x)); }
+
+  // Danh sách nhóm đang dùng (đã sắp xếp, bỏ nhóm ẩn), đánh số lại 1, 2, 3…
+  var ALL = [];
+  function applyCurriculum(cur) {
+    cur = cur || {};
+    var edits = cur.edits || {};
+    var custom = (cur.custom || []).map(function (c) { var g = clone(c); g.kind = 'van'; g.stage = 'tu-them'; return g; });
+    var pool = {};
+    Object.keys(CATALOG).forEach(function (k) { pool[k] = clone(CATALOG[k]); });
+    custom.forEach(function (g) { pool[g.key] = g; });
+    var order = (cur.order || DEFAULT_ORDER).filter(function (k) { return pool[k]; });
+    DEFAULT_ORDER.concat(custom.map(function (g) { return g.key; })).forEach(function (k) { if (order.indexOf(k) === -1 && pool[k]) order.push(k); });
+    var hidden = cur.hidden || [];
+    ALL = order.map(function (k) {
+      var g = pool[k], e = edits[k] || {};
+      if (e.words) g.vans.forEach(function (v) { if (e.words[v] && e.words[v].length) g.words[v] = clone(e.words[v]); });
+      if (e.phrases) g.phrases = clone(e.phrases);
+      if (e.sentences) g.sentences = clone(e.sentences);
+      if (e.fill) g.fill = clone(e.fill);
+      g.title = g.vans.join(', ');
+      g.hidden = hidden.indexOf(k) !== -1;
+      g.edited = !!edits[k];
+      return g;
+    });
+    var active = ALL.filter(function (g) { return !g.hidden; });
+    active.forEach(function (g, i) { g.id = i + 1; });
+    VV.data.GROUPS = active;
+    GROUPS = active;
+  }
+  function allGroups() { return ALL; }
+  function defaultsOf(key) { return CATALOG[key] ? clone(CATALOG[key]) : null; }
+
+  // Đơn vị là âm đầu (phụ âm) hay vần (bắt đầu bằng nguyên âm).
+  function isConsonantUnit(u) { return !!u && 'aăâeêioôơuưy'.indexOf(u[0]) === -1; }
+  function matches(word, unit) {
+    var p = VV.viet.parse(word);
+    if (!p) return false;
+    return isConsonantUnit(unit) ? p.initial === unit : p.van === unit;
+  }
+  function unitOf(group, word) {
+    for (var i = 0; i < group.vans.length; i++) if (matches(word, group.vans[i])) return group.vans[i];
+    return null;
+  }
+  function unitWord(u) { var g = groupOfVan(u); return g && g.kind === 'am' ? 'âm' : 'vần'; }
+  function unitLabel(u) { return unitWord(u) + ' ' + u; }
+  // Tìm nhóm và đơn vị chứa một tiếng (dùng cho thẻ mở từ mã QR).
+  function findWord(word) {
+    var w = String(word || '').toLowerCase();
+    for (var i = 0; i < GROUPS.length; i++) {
+      var g = GROUPS[i];
+      for (var j = 0; j < g.vans.length; j++) if (g.words[g.vans[j]].indexOf(w) !== -1) return { group: g, unit: g.vans[j] };
+    }
+    for (i = GROUPS.length - 1; i >= 0; i--) { var u = unitOf(GROUPS[i], w); if (u) return { group: GROUPS[i], unit: u }; }
+    return null;
+  }
+
+  // Kho tiếng tại một vị trí: còn trong giai đoạn học âm thì chỉ cho phép âm đầu đã học.
+  function khoAt(position, extraWords) {
+    var learned = vansUpTo(position);
+    var amGroups = GROUPS.filter(function (g) { return g.kind === 'am'; });
+    var lastAm = amGroups.length ? amGroups[amGroups.length - 1].id : 0;
+    var inAm = lastAm && position < lastAm;
+    var vowels = learned.filter(function (u) { return !isConsonantUnit(u); });
+    var vans = new Set(inAm ? vowels : BASE_VANS.concat(vowels));
+    var initials = inAm ? new Set(learned.filter(isConsonantUnit)) : null;
+    if (initials && initials.has('c')) initials.add('k');
+    return { vans: vans, initials: initials, extra: new Set((extraWords || []).map(function (w) { return String(w).toLowerCase(); })) };
+  }
 
   var READ_ERRORS = [
     { id: 'am-dau', label: 'Sai âm đầu' },
@@ -1482,6 +1756,18 @@ button.chip:active { transform: scale(.96); }
   VV.data = {
     BASE_VANS: BASE_VANS,
     GROUPS: GROUPS,
+    STAGES: STAGES,
+    DEFAULT_ORDER: DEFAULT_ORDER,
+    LEGACY_KEYS: LEGACY_KEYS,
+    applyCurriculum: applyCurriculum,
+    allGroups: allGroups,
+    isConsonantUnit: isConsonantUnit,
+    matches: matches,
+    unitOf: unitOf,
+    unitWord: unitWord,
+    unitLabel: unitLabel,
+    findWord: findWord,
+    khoAt: khoAt,
     READ_ERRORS: READ_ERRORS,
     WRITE_CRITERIA: WRITE_CRITERIA,
     INDEPENDENCE: INDEPENDENCE,
@@ -1491,12 +1777,12 @@ button.chip:active { transform: scale(.96); }
     HOME_STATUS: HOME_STATUS,
     HOME_SUPPORT: HOME_SUPPORT,
     groupOfVan: groupOfVan,
-    applyOverrides: applyOverrides,
     defaultsOf: defaultsOf,
     allVans: allVans,
     vansUpTo: vansUpTo,
     label: label
   };
+  applyCurriculum({});
 })(window.VV = window.VV || {});
 
 </script>
@@ -1541,7 +1827,8 @@ button.chip:active { transform: scale(.96); }
       library: [],
       effort: [],
       homework: [],
-      curriculum: {}
+      contentVersion: 2,
+      curriculum: { edits: {}, order: null, hidden: [], custom: [], toneStyle: 'moi' }
     };
   }
 
@@ -1552,11 +1839,61 @@ button.chip:active { transform: scale(.96); }
     };
   }
 
-  function load() {
-    var raw = safeGet(KEY);
-    if (raw) {
-      try { state = JSON.parse(raw); } catch (e) { state = null; }
+  // ---------- Lưu trữ: IndexedDB (dung lượng lớn, đủ cho cả năm học), dự phòng localStorage ----------
+  var DB_NAME = 'vanvui', DB_STORE = 'kv';
+  var dbPromise = null;
+  function db() {
+    if (!dbPromise) {
+      dbPromise = new Promise(function (resolve, reject) {
+        if (!window.indexedDB) { reject(new Error('no idb')); return; }
+        var timer = setTimeout(function () { reject(new Error('idb timeout')); }, 2000);
+        var req;
+        try { req = window.indexedDB.open(DB_NAME, 1); } catch (e) { clearTimeout(timer); reject(e); return; }
+        req.onupgradeneeded = function () { req.result.createObjectStore(DB_STORE); };
+        req.onsuccess = function () { clearTimeout(timer); resolve(req.result); };
+        req.onerror = function () { clearTimeout(timer); reject(req.error); };
+        req.onblocked = function () { clearTimeout(timer); reject(new Error('idb blocked')); };
+      });
     }
+    return dbPromise;
+  }
+  function idbGet(k) {
+    return db().then(function (d) {
+      return new Promise(function (resolve, reject) {
+        var r = d.transaction(DB_STORE, 'readonly').objectStore(DB_STORE).get(k);
+        r.onsuccess = function () { resolve(r.result); };
+        r.onerror = function () { reject(r.error); };
+      });
+    });
+  }
+  function idbPut(k, v) {
+    return db().then(function (d) {
+      return new Promise(function (resolve, reject) {
+        var tx = d.transaction(DB_STORE, 'readwrite');
+        tx.objectStore(DB_STORE).put(v, k);
+        tx.oncomplete = function () { resolve(true); };
+        tx.onerror = function () { reject(tx.error); };
+        tx.onabort = function () { reject(tx.error); };
+      });
+    });
+  }
+
+  // Dữ liệu trong localStorage chỉ còn khi là bản cũ hoặc khi IndexedDB không dùng được: ưu tiên bản đó.
+  function readRaw() {
+    var legacy = safeGet(KEY);
+    if (legacy) return Promise.resolve(legacy);
+    return idbGet(KEY).catch(function () { return null; });
+  }
+
+  function load() {
+    return readRaw().then(function (raw) {
+      if (raw) {
+        try { state = JSON.parse(raw); } catch (e) { state = null; }
+      }
+      finishLoad();
+    });
+  }
+  function finishLoad() {
     if (!state || state.version !== 1) state = buildDemo();
     migrate(state);
     var s = safeGet(SETTINGS_KEY);
@@ -1574,15 +1911,67 @@ button.chip:active { transform: scale(.96); }
   // Bổ sung trường mới cho dữ liệu đã lưu từ bản trước.
   function migrate(s) {
     var base = emptyState();
+    var oldKey = null;
+    if (!s.contentVersion) {
+      // Bản đầu chỉ có 10 nhóm vần đánh số 1-10: đổi sang khóa ổn định của danh sách đầy đủ.
+      var old = s.curriculum || {}, edits = {};
+      Object.keys(old).forEach(function (id) { var k = D.LEGACY_KEYS[Number(id) - 1]; if (k) edits[k] = old[id]; });
+      s.curriculum = { edits: edits, order: null, hidden: [], custom: [], toneStyle: 'moi' };
+      oldKey = D.LEGACY_KEYS[(s.classInfo && s.classInfo.progress || 1) - 1] || D.LEGACY_KEYS[0];
+      s.contentVersion = 2;
+    }
     Object.keys(base).forEach(function (k) { if (s[k] === undefined) s[k] = base[k]; });
     Object.keys(base.classInfo).forEach(function (k) { if (s.classInfo[k] === undefined) s.classInfo[k] = base.classInfo[k]; });
-    D.applyOverrides(s.curriculum);
+    Object.keys(base.curriculum).forEach(function (k) { if (s.curriculum[k] === undefined) s.curriculum[k] = base.curriculum[k]; });
+    D.applyCurriculum(s.curriculum);
+    VV.viet.setToneStyle(s.curriculum.toneStyle);
+    if (oldKey) s.classInfo.progress = positionOf(oldKey);
+    s.classInfo.progress = Math.max(1, Math.min(D.GROUPS.length, s.classInfo.progress || 1));
+  }
+  function positionOf(key) {
+    for (var i = 0; i < D.GROUPS.length; i++) if (D.GROUPS[i].key === key) return D.GROUPS[i].id;
+    return 1;
+  }
+
+  // Sửa danh sách nhóm (ẩn, đổi thứ tự, thêm nhóm…) mà vẫn giữ đúng nhóm lớp đang học.
+  function updateCurriculum(mutator) {
+    var cur = D.GROUPS[state.classInfo.progress - 1];
+    var curKey = cur && cur.key;
+    var curIndex = D.allGroups().indexOf(cur);
+    mutator(state.curriculum);
+    D.applyCurriculum(state.curriculum);
+    VV.viet.setToneStyle(state.curriculum.toneStyle);
+    var pos = 0;
+    D.GROUPS.forEach(function (g) { if (g.key === curKey) pos = g.id; });
+    if (!pos) {
+      // Nhóm đang học vừa bị ẩn: lùi về nhóm đang dùng gần nhất phía trước.
+      var all = D.allGroups();
+      for (var i = Math.min(curIndex, all.length - 1); i >= 0 && !pos; i--) if (!all[i].hidden) pos = all[i].id;
+    }
+    state.classInfo.progress = pos || 1;
+    save();
+    listeners.forEach(function (fn) { fn(); });
   }
 
   var saveFailed = false;
+  var lastSize = 0;
+  var writeChain = Promise.resolve();
+  var warned = false;
   function save() {
-    saveFailed = !safeSet(KEY, JSON.stringify(state));
+    var json = JSON.stringify(state);
+    lastSize = json.length * 2;
     safeSet(SETTINGS_KEY, JSON.stringify(settings));
+    // Ghi tuần tự để bản mới nhất luôn là bản cuối cùng được lưu.
+    writeChain = writeChain.then(function () {
+      return idbPut(KEY, json).then(function () {
+        saveFailed = false;
+        safeRemove(KEY);
+      }, function () {
+        saveFailed = !safeSet(KEY, json);
+        if (saveFailed && !warned && VV.ui) { warned = true; VV.ui.toast('Không lưu được dữ liệu: bộ nhớ trình duyệt đã đầy hoặc bị chặn. Xuất bản sao lưu ở Cài đặt, mục Dữ liệu.', 'error'); }
+      });
+    });
+    return writeChain;
   }
 
   function commit(mutator) {
@@ -1614,9 +2003,7 @@ button.chip:active { transform: scale(.96); }
   }
 
   function kho() {
-    var vans = new Set(D.BASE_VANS.concat(D.vansUpTo(state.classInfo.progress)));
-    var extra = new Set((state.classInfo.extraWords || []).map(function (w) { return w.toLowerCase(); }));
-    return { vans: vans, extra: extra };
+    return D.khoAt(state.classInfo.progress, state.classInfo.extraWords);
   }
 
   function byDateDesc(a, b) { return b.date - a.date; }
@@ -1671,13 +2058,15 @@ button.chip:active { transform: scale(.96); }
       var g = D.GROUPS[state.classInfo.progress - 1] || D.GROUPS[0];
       return {
         van: g.vans[0], level: 'ho-tro', measured: 0, cell: map[g.vans[0]],
-        reason: 'Chưa có đủ kết quả đọc. Bắt đầu với vần ' + g.vans[0] + ' của bài đang học và ghi phiếu đọc nhanh để hệ thống có căn cứ.'
+        reason: 'Chưa có đủ kết quả đọc. Bắt đầu với ' + D.unitLabel(g.vans[0]) + ' của bài đang học và ghi phiếu đọc nhanh để hệ thống có căn cứ.'
       };
     }
     measured.sort(function (a, b) {
       var ra = map[a].read.correct / map[a].read.total;
       var rb = map[b].read.correct / map[b].read.total;
       if (ra !== rb) return ra - rb;
+      // Cùng tỉ lệ: ưu tiên âm, vần có nhiều lần đo hơn (kết quả đáng tin hơn).
+      if (map[a].read.total !== map[b].read.total) return map[b].read.total - map[a].read.total;
       if (map[a].read.correct !== map[b].read.correct) return map[a].read.correct - map[b].read.correct;
       return learned.indexOf(a) - learned.indexOf(b);
     });
@@ -1688,12 +2077,12 @@ button.chip:active { transform: scale(.96); }
       var next = D.GROUPS[Math.min(state.classInfo.progress, D.GROUPS.length) - 1];
       return {
         van: next.vans[0], level: 'van-dung', measured: measured.length, cell: map[next.vans[0]],
-        reason: 'Các vần đã đo đều đạt từ 5/6 tiếng đúng. Gợi ý luyện vận dụng với bài đang học.'
+        reason: 'Các âm, vần đã đo đều đạt từ 5/6 tiếng đúng. Gợi ý luyện vận dụng với bài đang học.'
       };
     }
     var topErr = Object.keys(cell.errors).sort(function (a, b) { return cell.errors[b] - cell.errors[a]; })[0];
-    var reason = 'Hồ sơ ghi ' + cell.read.correct + '/' + cell.read.total + ' tiếng đúng ở vần ' + best +
-      ', thấp nhất trong ' + measured.length + ' vần đã đo.';
+    var reason = 'Hồ sơ ghi ' + cell.read.correct + '/' + cell.read.total + ' tiếng đúng ở ' + D.unitLabel(best) +
+      ', thấp nhất trong ' + measured.length + ' âm, vần đã đo.';
     if (topErr) reason += ' Lỗi gặp nhiều nhất: ' + D.label(D.READ_ERRORS, topErr).toLowerCase() + ' (' + cell.errors[topErr] + ' lần).';
     return { van: best, level: levelFor(ratio), measured: measured.length, cell: cell, reason: reason, topError: topErr };
   }
@@ -1766,27 +2155,36 @@ button.chip:active { transform: scale(.96); }
   }
 
   // Bài đo A/B: 2 tiếng mỗi vần ở các nhóm đã học, chọn 20 tiếng. Dạng A lấy tiếng chẵn, dạng B lấy tiếng lẻ.
+  // Bài đo A/B: 20 tiếng rải đều các âm, vần đã học (đã sang giai đoạn vần thì chỉ đo vần).
+  // Dạng A và B lấy tiếng khác nhau của cùng các đơn vị. Trả về [{ tieng, van }].
   function abForm(form, progress) {
-    var vans = D.vansUpTo(progress);
-    var pick = [];
-    var offset = form === 'A' ? 0 : 1;
-    var round = 0;
-    while (pick.length < 20 && round < 3) {
-      for (var i = 0; i < vans.length && pick.length < 20; i++) {
-        var g = D.groupOfVan(vans[i]);
-        var list = g.words[vans[i]];
-        var w = list[(offset + round * 2) % list.length];
-        if (pick.indexOf(w) === -1) pick.push(w);
-      }
-      round++;
+    var units = D.vansUpTo(progress);
+    var vanUnits = units.filter(function (u) { var g = D.groupOfVan(u); return g && g.kind === 'van'; });
+    if (vanUnits.length) units = vanUnits;
+    if (units.length > 20) {
+      var spaced = [];
+      for (var s = 0; s < 20; s++) spaced.push(units[Math.floor(s * units.length / 20)]);
+      units = spaced;
     }
-    return pick.slice(0, 20);
+    var pick = [], used = [];
+    var offset = form === 'A' ? 0 : 1;
+    for (var round = 0; round < 6 && pick.length < 20; round++) {
+      for (var i = 0; i < units.length && pick.length < 20; i++) {
+        var list = D.groupOfVan(units[i]).words[units[i]];
+        var w = list[(offset + round * 2) % list.length];
+        if (used.indexOf(w) === -1) { used.push(w); pick.push({ tieng: w, van: units[i] }); }
+      }
+    }
+    return pick;
   }
 
   function buildDemo() {
     var s = emptyState();
     s.isDemo = true;
-    s.classInfo = { name: 'Lớp 1A (mẫu)', progress: 6, extraWords: ['lan', 'na'] };
+    var posOf = function (key) { var p = 1; D.GROUPS.forEach(function (g) { if (g.key === key) p = g.id; }); return p; };
+    var demoProgress = posOf('v-oi');
+    var vanStart = posOf('v-an');
+    s.classInfo = { name: 'Lớp 1A (mẫu)', progress: demoProgress, extraWords: ['lan', 'na'], siteUrl: '' };
     var R = rng(20261026);
     var now = Date.now();
     var weak = {
@@ -1817,13 +2215,16 @@ button.chip:active { transform: scale(.96); }
         return { ok: ok, err: err };
       }
 
-      // Phiếu đọc nhanh đầu vào: nhóm 1-4, 6 tiếng mỗi vần, 4 tuần trước.
-      D.GROUPS.slice(0, 6).forEach(function (g) {
-        var phase = g.id <= 4 ? 'dau-vao' : 'thuong-xuyen';
-        var date = now - (g.id <= 4 ? 27 : 12 + g.id) * DAY + idx * 600000;
+      // Phiếu đọc nhanh: phần âm (đã vững) từ đầu năm; 4 nhóm vần đầu là đầu vào, các nhóm sau là thường xuyên.
+      D.GROUPS.slice(0, demoProgress).forEach(function (g) {
+        var isAm = g.kind === 'am';
+        var vanIdx = g.id - vanStart;
+        var phase = isAm || vanIdx < 4 ? 'dau-vao' : 'thuong-xuyen';
+        var date = now - (isAm ? 45 - g.id : vanIdx < 4 ? 27 : 20 - vanIdx) * DAY + idx * 600000;
         g.vans.forEach(function (v) {
-          g.words[v].forEach(function (w) {
-            var r = readTieng(v, phase, date, 'phieu', 0);
+          g.words[v].slice(0, isAm ? 3 : 6).forEach(function (w) {
+            var r = isAm ? { ok: R() < 0.97, err: 'thanh' } : readTieng(v, phase, date, 'phieu', 0);
+            if (r.ok) r.err = null;
             s.records.push({ id: uid('r'), studentId: stu.id, date: date, phase: phase, skill: 'doc', source: 'phieu',
               van: v, tieng: w, correct: r.ok, error: r.err, support: r.ok ? 'tu-doc' : 'co-ho-tro' });
           });
@@ -1831,7 +2232,7 @@ button.chip:active { transform: scale(.96); }
       });
 
       // Trò chơi nhận diện: vài lượt gần đây.
-      D.vansUpTo(6).forEach(function (v) {
+      D.vansUpTo(demoProgress).filter(function (v) { return D.groupOfVan(v).kind === 'van'; }).forEach(function (v) {
         var n = 3 + Math.floor(R() * 3);
         for (var k = 0; k < n; k++) {
           var gp = prof.vans.indexOf(v) !== -1 ? 0.6 : 0.92;
@@ -1846,10 +2247,9 @@ button.chip:active { transform: scale(.96); }
         var phase = form === 'A' ? 'dau-vao' : 'dau-ra';
         var date = now - (form === 'A' ? 28 : 1) * DAY + idx * 900000;
         var testId = uid('t');
-        var items = abForm(form, 4).map(function (w) {
-          var p = VV.viet.parse(w);
-          var r = readTieng(p.van, phase, date, 'bai-do', form === 'B' ? 0.18 : 0);
-          return { tieng: w, van: p.van, correct: r.ok, error: r.err };
+        var items = abForm(form, posOf('v-am')).map(function (it) {
+          var r = readTieng(it.van, phase, date, 'bai-do', form === 'B' ? 0.18 : 0);
+          return { tieng: it.tieng, van: it.van, correct: r.ok, error: r.err };
         });
         var score = items.filter(function (i) { return i.correct; }).length;
         s.tests.push({ id: testId, studentId: stu.id, date: date, phase: phase, form: form, items: items, score: score, total: 20 });
@@ -1960,13 +2360,10 @@ button.chip:active { transform: scale(.96); }
     commit(function (s) { var base = emptyState(); Object.keys(base).forEach(function (k) { s[k] = obj[k] !== undefined ? obj[k] : base[k]; }); migrate(s); });
   }
 
-  function storageSize() {
-    var raw = safeGet(KEY) || '';
-    return raw.length * 2;
-  }
+  function storageSize() { return lastSize; }
 
   VV.store = {
-    load: load, save: save, commit: commit, onChange: onChange, uid: uid,
+    load: load, save: save, whenSaved: function () { return writeChain; }, commit: commit, onChange: onChange, uid: uid,
     get state() { return state; },
     get settings() { return settings; },
     get saveFailed() { return saveFailed; },
@@ -1975,7 +2372,7 @@ button.chip:active { transform: scale(.96); }
     vanMap: vanMap, cellStatus: cellStatus, suggest: suggest, levelFor: levelFor, assignment: assignment,
     latestTest: latestTest, groupPrePost: groupPrePost, errorCounts: errorCounts,
     writingScore: writingScore, latestWriting: latestWriting, effortMinutes: effortMinutes,
-    abForm: abForm, resetToEmpty: resetToEmpty, resetToDemo: resetToDemo, importState: importState,
+    abForm: abForm, updateCurriculum: updateCurriculum, positionOf: positionOf, resetToEmpty: resetToEmpty, resetToDemo: resetToDemo, importState: importState,
     storageSize: storageSize, rng: rng, DAY: DAY
   };
 })(window.VV = window.VV || {});
@@ -2158,11 +2555,13 @@ button.chip:active { transform: scale(.96); }
   }
 
   // ---------- Lời nhắc ----------
-  function systemPrompt(allowedVans, extra) {
+  function systemPrompt(allowedVans, extra, initials) {
     return [
       'Bạn là trợ lý soạn học liệu luyện đọc, viết tiếng Việt cho học sinh lớp 1 (khoảng 6 tuổi). Bạn chỉ soạn bản nháp; giáo viên là người kiểm tra và quyết định cuối cùng.',
       'Quy tắc bắt buộc:',
-      '1. Chỉ dùng tiếng có vần nằm trong danh sách vần đã học: ' + allowedVans.join(', ') + '. Âm đầu nào cũng được. Tiếng có vần khác danh sách là lỗi (ví dụ "vườn" có vần ươn, "hoa" có vần oa).',
+      '1. Chỉ dùng tiếng có vần nằm trong danh sách vần đã học: ' + allowedVans.join(', ') + '. ' +
+        (initials ? 'Lớp đang học âm: chỉ dùng tiếng không có âm đầu hoặc có âm đầu trong danh sách: ' + initials.join(', ') + '.' : 'Âm đầu nào cũng được.') +
+        ' Tiếng có vần khác danh sách là lỗi (ví dụ "vườn" có vần ươn, "hoa" có vần oa).',
       extra && extra.length ? '2. Được dùng thêm các tiếng giáo viên đã duyệt: ' + extra.join(', ') + '.' : '2. Không có tiếng bổ sung.',
       '3. Câu ngắn từ 3 đến 7 tiếng, nội dung gần gũi, an toàn, tích cực với trẻ. Không dùng tên thật của học sinh. Không chép nguyên văn sách giáo khoa.',
       '4. Viết đúng chính tả và dấu thanh; viết thường, chỉ viết hoa đầu câu và tên riêng.',
@@ -2181,7 +2580,7 @@ button.chip:active { transform: scale(.96); }
 
   function exercisesPrompt(p) {
     return [
-      'Soạn bài tập luyện theo 3 mức độ cho nhóm vần: ' + p.vans.join(', ') + '.',
+      'Soạn bài tập luyện theo 3 mức độ cho: ' + p.vans.map(D.unitLabel).join(', ') + '.',
       'Yêu cầu cần đạt của bài: ' + (p.objective || '(không ghi)'),
       p.errors.length ? 'Lỗi học sinh hay gặp cần luyện: ' + p.errors.join(', ') + '.' : '',
       'Mỗi mức độ ' + p.perLevel + ' nhiệm vụ. Ba mức: "ho-tro" (có hỗ trợ: tô màu vần, ít lựa chọn, có nghe mẫu), "tu-lam" (tự thực hiện), "van-dung" (dùng tiếng trong từ, câu mới).',
@@ -2194,7 +2593,7 @@ button.chip:active { transform: scale(.96); }
 
   function storyPrompt(p) {
     return [
-      'Viết một truyện rất ngắn ' + p.sentences + ' câu để luyện đọc vần: ' + p.vans.join(', ') + '. Chủ đề: ' + p.topic + '.',
+      'Viết một truyện rất ngắn ' + p.sentences + ' câu để luyện đọc: ' + p.vans.map(D.unitLabel).join(', ') + '. Chủ đề: ' + p.topic + '.',
       'Dùng nhiều tiếng có vần cần luyện. Thêm 2 câu hỏi đọc hiểu ngắn kèm câu trả lời mẫu.',
       'Trả về JSON đúng mẫu:',
       '{"title":"Tên truyện","story":"Câu 1. Câu 2. Câu 3.","questions":[{"q":"Câu hỏi?","a":"Câu trả lời."}]}'
@@ -2204,7 +2603,7 @@ button.chip:active { transform: scale(.96); }
   function parentPrompt(p) {
     return [
       'Soạn gói "5 phút cùng con" để phụ huynh luyện cùng con ở nhà: 3 phút đọc có người lớn hỗ trợ, 2 phút viết một nhiệm vụ ngắn.',
-      'Vần cần luyện: ' + p.vans.join(', ') + '. Lỗi con hay gặp: ' + (p.errors.length ? p.errors.join(', ') : 'chưa ghi') + '.',
+      'Âm, vần cần luyện: ' + p.vans.map(D.unitLabel).join(', ') + '. Lỗi con hay gặp: ' + (p.errors.length ? p.errors.join(', ') : 'chưa ghi') + '.',
       'Hướng dẫn dễ hiểu cho phụ huynh không có chuyên môn, giọng nhẹ nhàng, không so sánh với bạn khác, không chấm điểm.',
       'Các tiếng, câu để con đọc và viết phải theo quy tắc kho tiếng. Lời hướng dẫn cho phụ huynh thì không bị giới hạn.',
       'Trả về JSON đúng mẫu:',
@@ -2214,7 +2613,7 @@ button.chip:active { transform: scale(.96); }
 
   function writingPrompt(p) {
     return [
-      'Soạn phiếu luyện viết vào vở ô li cho học sinh lớp 1. Vần trọng tâm: ' + p.vans.join(', ') + '.',
+      'Soạn phiếu luyện viết vào vở ô li cho học sinh lớp 1. Trọng tâm: ' + p.vans.map(D.unitLabel).join(', ') + '.',
       'Lỗi viết giáo viên đã ghi: ' + (p.errors.length ? p.errors.join(', ') : 'chưa ghi') + '.',
       'Gồm hướng dẫn ngắn cho học sinh (giáo viên đọc to), 5 tiếng hoặc từ để viết, và một lưu ý cho giáo viên khi chấm.',
       'Trả về JSON đúng mẫu:',
@@ -2239,40 +2638,44 @@ button.chip:active { transform: scale(.96); }
       var words = g.words[van];
       var w = words[(round * 2) % words.length];
       var parsed = VV.viet.parse(w);
-      var others = g.vans.filter(function (v) { return v !== van; });
-      var w1 = g.words[others[0]], w2 = g.words[others[1 % others.length]];
-      var d1 = w1[round % w1.length];
-      var d2 = w2[(round + 3) % w2.length];
+      var cons = D.isConsonantUnit(van);
+      var others = g.vans.filter(function (v) { return v !== van && D.isConsonantUnit(v) === cons; });
+      // Tiếng nhiễu không được chứa âm, vần đang hỏi.
+      var pool = [];
+      g.vans.forEach(function (v) { if (v !== van) g.words[v].forEach(function (x) { if (!D.matches(x, van) && pool.indexOf(x) === -1) pool.push(x); }); });
+      var d1 = pool[round % (pool.length || 1)] || 'bé', d2 = pool[(round + 3) % (pool.length || 1)] || 'bà';
+      if (d2 === d1) d2 = pool[(round + 1) % (pool.length || 1)] || 'bà';
+      var label = D.unitLabel(van);
 
       out['ho-tro'].push({
         level: 'ho-tro', type: 'nhan-dien', van: van,
-        prompt: 'Nghe cô đọc, chọn tiếng có vần ' + van + '.',
-        question: 'Tiếng nào có vần ' + van + '?',
+        prompt: 'Nghe cô đọc, chọn tiếng có ' + label + '.',
+        question: 'Tiếng nào có ' + label + '?',
         options: shuffle([w, d1, d2], R), answer: w,
-        teacherNote: 'Đọc mẫu vần ' + van + ' trước khi cho học sinh chọn.'
+        teacherNote: 'Đọc mẫu ' + label + ' trước khi cho học sinh chọn.'
       });
 
-      var dis = VV.viet.toneDistractors(w, others);
+      var dis = VV.viet.toneDistractors(w, cons ? [] : others);
       out['tu-lam'].push({
         level: 'tu-lam', type: 'ghep-tieng', van: van,
         prompt: 'Ghép âm, vần và dấu thanh thành tiếng.',
-        question: (parsed.initial || '(không có âm đầu)') + ' + ' + van + ' + ' + VV.viet.TONE_NAME[parsed.tone],
+        question: (parsed.initial || '(không có âm đầu)') + ' + ' + parsed.van + ' + ' + VV.viet.TONE_NAME[parsed.tone],
         options: shuffle([w].concat(dis), R),
         answer: w, teacherNote: 'Cho học sinh đọc to tiếng vừa ghép.'
       });
 
-      var fills = g.fill.filter(function (f) { return VV.viet.parse(f.answer).van === van; });
-      if (k % 2 === 0 || !fills.length) {
+      var fills = g.fill.filter(function (f) { return D.matches(f.answer, van); });
+      if ((k % 2 === 0 || !fills.length) && g.fill.length) {
         var f = fills[round % (fills.length || 1)] || g.fill[round % g.fill.length];
         out['van-dung'].push({
-          level: 'van-dung', type: 'hoan-thanh-cau', van: VV.viet.parse(f.answer).van,
+          level: 'van-dung', type: 'hoan-thanh-cau', van: D.unitOf(g, f.answer) || van,
           prompt: 'Chọn tiếng điền vào chỗ trống rồi đọc cả câu.',
           question: f.text, options: shuffle(f.options, R), answer: f.answer,
           teacherNote: 'Hỏi học sinh vì sao chọn tiếng đó.'
         });
       } else {
         var phrase = g.phrases.filter(function (ph) {
-          return ph.split(' ').some(function (x) { var q = VV.viet.parse(x); return q && q.van === van; });
+          return ph.split(' ').some(function (x) { return D.matches(x, van); });
         })[0] || w;
         out['van-dung'].push({
           level: 'van-dung', type: 'viet', van: van, prompt: 'Viết vào vở ô li.',
@@ -2376,7 +2779,7 @@ button.chip:active { transform: scale(.96); }
     var t = TOOLS[tool];
     if (!useAI) return Promise.resolve({ data: t.norm(t.template(params)), source: 'mau' });
     var k = VV.store.kho();
-    var sys = systemPrompt(Array.from(k.vans), Array.from(k.extra));
+    var sys = systemPrompt(Array.from(k.vans), Array.from(k.extra), k.initials ? Array.from(k.initials) : null);
     return complete(sys, t.prompt(params), { signal: signal, json: true, maxTokens: t.maxTokens })
       .then(function (text) { return { data: t.norm(extractJSON(text)), source: 'ai' }; });
   }
@@ -2430,6 +2833,8 @@ button.chip:active { transform: scale(.96); }
     camera: '<path d="M3 7h4l2-3h6l2 3h4v13H3z"/><circle cx="12" cy="13" r="4"/>',
     alert: '<path d="M12 3 2 21h20z"/><path d="M12 10v4"/><path d="M12 17.5v.01"/>',
     home: '<path d="M3 11 12 3l9 8"/><path d="M5 10v10h14V10"/>',
+    arrowUp: '<path d="M12 19V5"/><path d="m5 12 7-7 7 7"/>',
+    arrowDown: '<path d="M12 5v14"/><path d="m19 12-7 7-7-7"/>',
     help: '<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6v.6"/><path d="M12 17v.01"/>',
     qr: '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3z"/><path d="M20 14v.01"/><path d="M14 20h.01"/><path d="M17 20h4v-3"/>'
   };
@@ -2530,20 +2935,40 @@ button.chip:active { transform: scale(.96); }
   }
 
   // ---------- Chữ: tô vần, kiểm tra kho ----------
+  // Tô màu phần cần chú ý trong tiếng: âm đầu (với bài âm) hoặc vần (với bài vần).
   function vanWord(word, van) {
-    var parts = VV.viet.splitForHighlight(word);
     var p = VV.viet.parse(word);
-    if (!p || (van && p.van !== van)) return esc(word);
+    if (!p) return esc(word);
+    if (van && VV.data.isConsonantUnit(van)) {
+      if (p.initial !== van) return esc(word);
+      return '<span class="hl-van">' + esc(word.slice(0, van.length)) + '</span>' + esc(word.slice(van.length));
+    }
+    if (van && p.van !== van) return esc(word);
+    var parts = VV.viet.splitForHighlight(word);
     return esc(parts[0]) + '<span class="hl-van">' + esc(parts[1]) + '</span>';
   }
-  // Tô các tiếng mang vần trong danh sách vans.
+  // Tô các tiếng mang âm hoặc vần trong danh sách.
   function vanText(text, vans) {
     return VV.viet.tokenize(text).map(function (t) {
       if (!t.isWord) return esc(t.text);
-      var p = VV.viet.parse(t.text);
-      if (p && vans.indexOf(p.van) !== -1) return vanWord(t.text, p.van);
+      for (var i = 0; i < vans.length; i++) if (VV.data.matches(t.text, vans[i])) return vanWord(t.text, vans[i]);
       return esc(t.text);
     }).join('');
+  }
+
+  // Ô chọn nhóm, chia theo giai đoạn. maxId: chỉ hiện nhóm tới vị trí này (bỏ trống là tất cả).
+  function groupSelect(id, name, selected, maxId, label) {
+    var D = VV.data;
+    var progress = VV.store.state.classInfo.progress;
+    return '<select id="' + esc(id) + '" name="' + esc(name) + '"' + (label ? ' aria-label="' + esc(label) + '"' : '') + '>' +
+      D.STAGES.map(function (st) {
+        var gs = D.GROUPS.filter(function (g) { return g.stage === st.id && (!maxId || g.id <= maxId); });
+        if (!gs.length) return '';
+        return '<optgroup label="' + esc(st.label) + '">' + gs.map(function (g) {
+          return '<option value="' + g.id + '"' + (g.id === selected ? ' selected' : '') + '>Nhóm ' + g.id + ': ' + esc(g.title) +
+            (g.id === progress ? ' (đang học)' : g.id > progress ? ' (chưa học)' : '') + '</option>';
+        }).join('') + '</optgroup>';
+      }).join('') + '</select>';
   }
   // Đánh dấu tiếng ngoài kho.
   function khoText(text) {
@@ -2666,7 +3091,7 @@ button.chip:active { transform: scale(.96); }
   VV.ui = {
     esc: esc, icon: icon, toast: toast, openDialog: openDialog, closeDialog: closeDialog, confirmDialog: confirmDialog,
     speak: speak, speakBtn: speakBtn, canSpeak: canSpeak, viVoices: viVoices,
-    vanWord: vanWord, vanText: vanText, khoText: khoText,
+    vanWord: vanWord, vanText: vanText, khoText: khoText, groupSelect: groupSelect,
     fmtDate: fmtDate, fmtShort: fmtShort, pct: pct, dec: dec, download: download, csv: csv, printHTML: printHTML, copyText: copyText,
     readImage: readImage, reducedMotion: reducedMotion, segmented: segmented, studentOptions: studentOptions, emptyState: emptyState
   };
@@ -2780,7 +3205,9 @@ button.chip:active { transform: scale(.96); }
   }
 
   function init() {
-    VV.store.load();
+    VV.store.load().then(start, function () { start(); });
+  }
+  function start() {
     main = document.getElementById('main');
     ['click'].forEach(function (t) { main.addEventListener(t, function (e) { dispatch('click', e); }); });
     main.addEventListener('change', function (e) { dispatch('change', e); });
@@ -2836,7 +3263,7 @@ button.chip:active { transform: scale(.96); }
   'use strict';
   var ui = VV.ui, D = VV.data, S = VV.store;
 
-  var view = { selected: null, compare: false, second: null };
+  var view = { selected: null, compare: false, second: null, openStages: {} };
 
   var STATUS_LABEL = { 'can-luyen': 'Cần luyện', 'dang-len': 'Đang lên', 'vung': 'Vững', 'chua-do': 'Chưa đo' };
 
@@ -2852,7 +3279,7 @@ button.chip:active { transform: scale(.96); }
   function tile(cell, learned) {
     var status = S.cellStatus(cell);
     var score = cell.read.total ? cell.read.correct + '/' + cell.read.total : '–';
-    var aria = 'Vần ' + cell.van + ': ' + (cell.read.total ? cell.read.correct + ' trên ' + cell.read.total + ' tiếng đọc đúng' : 'chưa đo') + (learned ? '' : ', chưa học');
+    var aria = D.unitLabel(cell.van).replace(/^./, function (c) { return c.toUpperCase(); }) + ': ' + (cell.read.total ? cell.read.correct + ' trên ' + cell.read.total + ' tiếng đọc đúng' : 'chưa đo') + (learned ? '' : ', chưa học');
     var game = cell.game.total ? '<span class="van-game">chọn đúng ' + cell.game.correct + '/' + cell.game.total + '</span>' : '';
     return '<button type="button" class="van-tile is-' + status + (learned ? '' : ' is-future') + '" data-act="detail" data-van="' + ui.esc(cell.van) + '" aria-label="' + ui.esc(aria) + '">' +
       '<span class="van-glyph">' + ui.esc(cell.van) + '</span>' +
@@ -2864,15 +3291,33 @@ button.chip:active { transform: scale(.96); }
     var progress = S.state.classInfo.progress;
     var sug = S.suggest(studentId);
     var asg = S.assignment(studentId);
-    var groups = D.GROUPS.map(function (g) {
-      var learned = g.id <= progress;
-      return '<div class="map-row' + (learned ? '' : ' is-future') + '">' +
-        '<span class="map-row-label">Nhóm ' + g.id + (learned ? '' : '<small>chưa học</small>') + '</span>' +
-        '<div class="map-tiles">' + g.vans.map(function (v) { return tile(map[v], learned); }).join('') + '</div></div>';
+    // Chỉ hiện nhóm đã học, gom theo giai đoạn. Giai đoạn đã vững hết thì thu gọn.
+    function row(g) {
+      return '<div class="map-row">' +
+        '<span class="map-row-label">Nhóm ' + g.id + '</span>' +
+        '<div class="map-tiles">' + g.vans.map(function (v) { return tile(map[v], true); }).join('') + '</div></div>';
+    }
+    var groups = D.STAGES.map(function (st) {
+      var gs = D.GROUPS.filter(function (g) { return g.stage === st.id && g.id <= progress; });
+      if (!gs.length) return '';
+      var units = [];
+      gs.forEach(function (g) { units = units.concat(g.vans); });
+      var count = { 'can-luyen': 0, 'dang-len': 0, 'vung': 0, 'chua-do': 0 };
+      units.forEach(function (u) { count[S.cellStatus(map[u])]++; });
+      var hasCurrent = gs[gs.length - 1].id === progress;
+      var open = hasCurrent || count['can-luyen'] > 0 || view.openStages[st.id];
+      var summary = units.length + ' ' + (st.id === 'am' ? 'âm' : 'vần') +
+        (count['can-luyen'] ? ', ' + count['can-luyen'] + ' cần luyện' : '') +
+        (count['dang-len'] ? ', ' + count['dang-len'] + ' đang lên' : '') +
+        (count.vung ? ', ' + count.vung + ' vững' : '') + (count['chua-do'] ? ', ' + count['chua-do'] + ' chưa đo' : '');
+      return '<details class="map-stage" data-stage="' + st.id + '"' + (open ? ' open' : '') + '><summary><span class="map-stage-name">' + ui.esc(st.label) + '</span>' +
+        '<span class="map-stage-sum">' + summary + '</span></summary>' + gs.map(row).join('') + '</details>';
     }).join('');
+    var left = D.GROUPS.length - progress;
+    if (left > 0) groups += '<p class="sheet-note">Còn ' + left + ' nhóm lớp chưa học. Đổi bài đang học ở trang Bài học số.</p>';
 
     var asgHTML = asg
-      ? '<p class="assigned">' + ui.icon('check') + '<span>Đang giao: vần <b class="glyph-inline">' + ui.esc(asg.van) + '</b>, mức ' +
+      ? '<p class="assigned">' + ui.icon('check') + '<span>Đang giao: ' + D.unitWord(asg.van) + ' <b class="glyph-inline">' + ui.esc(asg.van) + '</b>, mức ' +
         ui.esc(D.label(D.LEVELS, asg.level).toLowerCase()) + ' (' + (asg.source === 'goi-y' ? 'theo gợi ý' : 'giáo viên chọn') + ', ' + ui.fmtShort(asg.date) + ').</span>' +
         '<button type="button" class="btn btn-sm btn-ghost" data-act="unassign" data-student="' + studentId + '">Bỏ giao</button></p>'
       : '<p class="assigned is-none">Chưa giao bài cho em này.</p>';
@@ -2937,7 +3382,7 @@ button.chip:active { transform: scale(.96); }
 
     root.innerHTML = '<section class="page">' +
       '<header class="page-head"><div><h1>Bản đồ âm vần</h1>' +
-      '<p class="lede">' + ui.esc(st.classInfo.name) + ' đã học tới nhóm ' + g.id + ' (' + ui.esc(g.title) + '). Chọn một em để xem vần cần luyện và bài gợi ý.</p></div>' +
+      '<p class="lede">' + ui.esc(st.classInfo.name) + ' đang học nhóm ' + g.id + ' (' + ui.esc(g.title) + '). Chọn một em để xem âm, vần cần luyện và bài gợi ý.</p></div>' +
       '<label class="switch"><input type="checkbox" data-role="compare"' + (view.compare ? ' checked' : '') + '><span>So sánh hai hồ sơ</span></label></header>' +
       (st.isDemo ? '<div class="banner">Đây là dữ liệu mẫu của 8 học sinh giả lập để xem thử. <a href="#/cai-dat/du-lieu">Xóa dữ liệu mẫu</a> khi bắt đầu dùng với lớp của bạn.</div>' : '') +
       (view.compare
@@ -2955,7 +3400,7 @@ button.chip:active { transform: scale(.96); }
     var games = recs.filter(function (r) { return r.skill === 'nhan-dien'; });
     var g = D.groupOfVan(van);
     ui.openDialog(
-      '<h2 id="dialog-title" class="dialog-title">Vần <span class="glyph-inline">' + ui.esc(van) + '</span> của ' + ui.esc(S.studentLabel(sid)) + '</h2>' +
+      '<h2 id="dialog-title" class="dialog-title">' + (D.unitWord(van) === 'âm' ? 'Âm' : 'Vần') + ' <span class="glyph-inline">' + ui.esc(van) + '</span> của ' + ui.esc(S.studentLabel(sid)) + '</h2>' +
       (reads.length
         ? '<div class="table-wrap"><table class="table"><thead><tr><th scope="col">Ngày</th><th scope="col">Tiếng</th><th scope="col">Kết quả</th><th scope="col">Lỗi</th></tr></thead><tbody>' +
           reads.map(function (r) {
@@ -2992,8 +3437,10 @@ button.chip:active { transform: scale(.96); }
     var cur = S.assignment(studentId) || S.suggest(studentId);
     ui.openDialog(
       '<form data-form="change"><h2 id="dialog-title" class="dialog-title">Đổi bài cho ' + ui.esc(S.studentLabel(studentId)) + '</h2>' +
-      '<div class="field"><label for="chg-van">Vần cần luyện</label><select id="chg-van" name="van">' +
-      learned.map(function (v) { return '<option' + (v === cur.van ? ' selected' : '') + '>' + ui.esc(v) + '</option>'; }).join('') + '</select></div>' +
+      '<div class="field"><label for="chg-van">Âm, vần cần luyện</label><select id="chg-van" name="van">' +
+      D.GROUPS.filter(function (g) { return g.id <= S.state.classInfo.progress; }).map(function (g) {
+        return '<optgroup label="Nhóm ' + g.id + '">' + g.vans.map(function (v) { return '<option value="' + ui.esc(v) + '"' + (v === cur.van ? ' selected' : '') + '>' + ui.esc(D.unitLabel(v)) + '</option>'; }).join('') + '</optgroup>';
+      }).join('') + '</select></div>' +
       '<fieldset class="field"><legend>Mức độ</legend>' + ui.segmented('chg-level', D.LEVELS, cur.level, 'Mức độ') + '</fieldset>' +
       '<div class="field"><label for="chg-note">Ghi chú của giáo viên <span class="optional">(không bắt buộc)</span></label><input id="chg-note" name="note" autocomplete="off" placeholder="Ví dụ: em đọc nhầm an và ang…"></div>' +
       '<div class="dialog-actions"><button type="button" class="btn" data-global="close-dialog">Hủy</button><button type="submit" class="btn btn-primary">Giao bài</button></div></form>',
@@ -3055,6 +3502,12 @@ button.chip:active { transform: scale(.96); }
       VV.studentMode.open({ preview: true, van: el.getAttribute('data-van'), level: el.getAttribute('data-level') });
     }
   };
+  // Nhớ giai đoạn giáo viên đã mở trên bản đồ khi màn hình vẽ lại.
+  document.addEventListener('toggle', function (e) {
+    var d = e.target;
+    if (d && d.classList && d.classList.contains('map-stage')) view.openStages[d.getAttribute('data-stage')] = d.open;
+  }, true);
+
   view.onchange = function (e) {
     var t = e.target;
     if (t.name === 'stuA') { view.selected = t.value; history.replaceState(null, '', '#/ban-do/' + t.value); VV.app.refresh(); }
@@ -3088,22 +3541,38 @@ button.chip:active { transform: scale(.96); }
   }
   function uniq(arr) { return arr.filter(function (x, i) { return arr.indexOf(x) === i; }); }
 
-  // ---------- Sinh câu hỏi ----------
+  // ---------- Sinh câu hỏi (dùng được cho cả bài âm và bài vần) ----------
+  // Các âm, vần cùng nhóm và cùng loại (âm đầu với âm đầu, vần với vần).
   function siblings(van) {
     var g = D.groupOfVan(van);
-    return g.vans.filter(function (v) { return v !== van; });
+    var cons = D.isConsonantUnit(van);
+    return g.vans.filter(function (v) { return v !== van && D.isConsonantUnit(v) === cons; });
+  }
+  // Tiếng nhiễu: lấy từ các âm, vần khác trong nhóm nhưng không chứa âm, vần đang hỏi.
+  function decoys(van, n) {
+    var g = D.groupOfVan(van);
+    var pool = [];
+    g.vans.forEach(function (v) { if (v !== van) g.words[v].forEach(function (w) { if (!D.matches(w, van) && pool.indexOf(w) === -1) pool.push(w); }); });
+    if (pool.length < n) {
+      // Nhóm quá nhỏ: lấy thêm từ nhóm liền trước.
+      var prev = D.GROUPS[g.id - 2];
+      if (prev) prev.vans.forEach(function (v) { prev.words[v].forEach(function (w) { if (!D.matches(w, van) && pool.indexOf(w) === -1) pool.push(w); }); });
+    }
+    return shuffle(pool).slice(0, n);
+  }
+  // Phương án sai cho bài ghép tiếng: đổi dấu thanh (hợp luật), hoặc đổi sang vần gần giống.
+  function ghepDecoys(w, van) {
+    return V.toneDistractors(w, D.isConsonantUnit(van) ? [] : siblings(van));
   }
 
   function qNhanDien(van, level, used) {
     var g = D.groupOfVan(van);
     var words = g.words[van].filter(function (w) { return used.indexOf(w) === -1; });
     var w = pick(words.length ? words : g.words[van]);
-    var sib = siblings(van);
-    var n = level === 'ho-tro' ? 1 : 2;
-    var ds = shuffle(sib).slice(0, n).map(function (v) { return pick(g.words[v]); });
+    var ds = decoys(van, level === 'ho-tro' ? 1 : 2);
     return {
       type: 'nhan-dien', van: van, word: w,
-      prompt: 'Chọn tiếng có vần', focus: van, speakText: van,
+      prompt: 'Chọn tiếng có ' + D.unitWord(van), focus: van, speakText: van,
       options: shuffle([w].concat(ds)), answer: w, showVan: level === 'ho-tro'
     };
   }
@@ -3113,32 +3582,35 @@ button.chip:active { transform: scale(.96); }
     var words = g.words[van].filter(function (w) { return used.indexOf(w) === -1; });
     var w = pick(words.length ? words : g.words[van]);
     var p = V.parse(w);
-    var ds = V.toneDistractors(w, siblings(van)).slice(0, level === 'ho-tro' ? 1 : 2);
+    var ds = ghepDecoys(w, van).slice(0, level === 'ho-tro' ? 1 : 2);
+    if (!ds.length) return qNhanDien(van, level, used);
     return {
       type: 'ghep-tieng', van: van, word: w,
-      prompt: 'Ghép thành tiếng', parts: [p.initial || '', van, V.TONE_NAME[p.tone]], speakText: w,
+      prompt: 'Ghép thành tiếng', parts: [p.initial || '', p.van, V.TONE_NAME[p.tone]], speakText: w,
       options: shuffle([w].concat(ds)), answer: w, showVan: level === 'ho-tro'
     };
   }
 
   function qChonTu(van, level) {
     var g = D.groupOfVan(van);
-    var phrases = g.phrases.filter(function (ph) {
-      return ph.split(' ').some(function (x) { var q = V.parse(x); return q && q.van === van; });
-    });
-    if (!phrases.length) return qNhanDien(van, level, []);
+    var phrases = g.phrases.filter(function (ph) { return ph.split(' ').some(function (x) { return D.matches(x, van); }); });
+    var sibs = siblings(van);
+    if (!phrases.length || !sibs.length) return qNhanDien(van, level, []);
     var ph = pick(phrases);
     var parts = ph.split(' ');
     var idx = 0;
-    parts.forEach(function (x, i) { var q = V.parse(x); if (q && q.van === van) idx = i; });
+    parts.forEach(function (x, i) { if (D.matches(x, van)) idx = i; });
     var p = V.parse(parts[idx]);
-    var wrong = siblings(van).filter(function (v) { return V.validTones(v).indexOf(p.tone) !== -1; }).map(function (v) {
+    var cons = D.isConsonantUnit(van);
+    // Viết sai: thay âm đầu (bài âm) hoặc thay vần (bài vần) bằng âm, vần gần giống trong nhóm.
+    var wrong = sibs.filter(function (v) { return cons || V.validTones(v).indexOf(p.tone) !== -1; }).map(function (v) {
       var copy = parts.slice();
-      var w = V.compose(p.initial, v, p.tone);
+      var w = cons ? V.compose(v, p.van, p.tone) : V.compose(p.initial, v, p.tone);
       copy[idx] = parts[idx][0] === parts[idx][0].toUpperCase() ? w[0].toUpperCase() + w.slice(1) : w;
       return copy.join(' ');
     });
     var ds = uniq(wrong).filter(function (x) { return x !== ph; }).slice(0, level === 'ho-tro' ? 1 : 2);
+    if (!ds.length) return qNhanDien(van, level, []);
     return {
       type: 'chon-tu', van: van, word: parts[idx],
       prompt: 'Từ nào viết đúng?', speakText: ph,
@@ -3148,11 +3620,12 @@ button.chip:active { transform: scale(.96); }
 
   function qCau(van, level) {
     var g = D.groupOfVan(van);
-    var fills = g.fill.filter(function (f) { return V.parse(f.answer).van === van; });
+    if (!g.fill.length) return qNhanDien(van, level, []);
+    var fills = g.fill.filter(function (f) { return D.matches(f.answer, van); });
     var f = pick(fills.length ? fills : g.fill);
     var opts = level === 'ho-tro' ? [f.answer, f.options.filter(function (o) { return o !== f.answer; })[0]] : f.options;
     return {
-      type: 'hoan-thanh-cau', van: V.parse(f.answer).van, word: f.answer,
+      type: 'hoan-thanh-cau', van: D.unitOf(g, f.answer) || van, word: f.answer,
       prompt: 'Chọn tiếng điền vào chỗ trống', sentence: f.text, speakText: f.text.replace('___', f.answer),
       options: shuffle(opts), answer: f.answer, showVan: level === 'ho-tro'
     };
@@ -3236,18 +3709,18 @@ button.chip:active { transform: scale(.96); }
     var card = sm && sm.step === 'card' ? sm.card : null;
     sm = null;
     // Mở từ mã QR: quay về bài học chứa thẻ thay vì mở lại thẻ.
-    if (card && VV.app.route === 'the') { location.hash = '#/bai-hoc/' + D.groupOfVan(card.van).id; return; }
+    if (card && VV.app.route === 'the') { location.hash = '#/bai-hoc/' + (D.groupOfVan(card.van) || D.GROUPS[0]).id; return; }
     VV.app.refresh();
   }
 
   // ---------- Thẻ vần biết nói (mở từ mã QR hoặc trang bài học) ----------
   function openCard(word) {
-    var p = V.parse(word);
-    var g = p && D.groupOfVan(p.van);
+    var found = D.findWord(word);
+    var g = found && found.group;
     if (!g) { ui.toast('Không tìm thấy thẻ cho “' + word + '”.', 'error'); return; }
     open({ noStudent: true });
     sm.step = 'card';
-    sm.card = { word: word, van: p.van };
+    sm.card = { word: String(word).toLowerCase(), van: found.unit };
     draw(true);
   }
   function drawCard() {
@@ -3256,8 +3729,9 @@ button.chip:active { transform: scale(.96); }
     var list = D.groupOfVan(c.van).words[c.van];
     var i = list.indexOf(c.word);
     return '<div class="sm-body sm-center">' +
-      '<h1 class="sm-title" id="sm-title">Thẻ vần ' + ui.esc(c.van) + '</h1>' +
-      '<p class="sm-parts reading">' + (p.initial ? '<span class="part">' + ui.esc(p.initial) + '</span><span class="plus">+</span>' : '') + '<span class="part part-van">' + ui.esc(c.van) + '</span></p>' +
+      '<h1 class="sm-title" id="sm-title">Thẻ ' + ui.esc(D.unitLabel(c.van)) + '</h1>' +
+      '<p class="sm-parts reading">' + (p.initial ? '<span class="part' + (D.isConsonantUnit(c.van) ? ' part-van' : '') + '">' + ui.esc(p.initial) + '</span><span class="plus">+</span>' : '') +
+      '<span class="part' + (D.isConsonantUnit(c.van) ? '' : ' part-van') + '">' + ui.esc(p.van) + '</span></p>' +
       '<ol class="card-steps">' +
       '<li class="card-step"><p class="card-step-label">Đọc tiếng</p><p class="reading card-word">' + ui.esc(flat) + '</p>' + ui.speakBtn(flat, 'Nghe “' + flat + '”', 'sm-speak') + '</li>' +
       (p.tone !== 'ngang'
@@ -3268,7 +3742,7 @@ button.chip:active { transform: scale(.96); }
       '<div class="btn-row sm-card-nav">' +
       (i > 0 ? '<button type="button" class="btn btn-lg" data-sm="card" data-word="' + ui.esc(list[i - 1]) + '">' + ui.icon('arrowLeft') + ui.esc(list[i - 1]) + '</button>' : '') +
       (i < list.length - 1 ? '<button type="button" class="btn btn-lg" data-sm="card" data-word="' + ui.esc(list[i + 1]) + '">' + ui.esc(list[i + 1]) + ui.icon('arrowRight') + '</button>' : '') +
-      '<button type="button" class="btn btn-primary btn-lg" data-sm="card-practice">' + ui.icon('play') + 'Luyện vần ' + ui.esc(c.van) + '</button>' +
+      '<button type="button" class="btn btn-primary btn-lg" data-sm="card-practice">' + ui.icon('play') + 'Luyện ' + ui.esc(D.unitLabel(c.van)) + '</button>' +
       '</div></div>';
   }
 
@@ -3287,7 +3761,7 @@ button.chip:active { transform: scale(.96); }
   }
 
   function topbar() {
-    var label = sm.step === 'card' ? 'Thẻ vần biết nói' : sm.cfg.preview ? 'Xem thử, không ghi kết quả' : (sm.studentId ? S.studentLabel(sm.studentId) : 'Chơi thử, không ghi kết quả');
+    var label = sm.step === 'card' ? 'Thẻ biết nói' : sm.cfg.preview ? 'Xem thử, không ghi kết quả' : (sm.studentId ? S.studentLabel(sm.studentId) : 'Chơi thử, không ghi kết quả');
     var prog = sm.step === 'play' ? '<div class="sm-progress" role="progressbar" aria-label="Tiến độ" aria-valuemin="0" aria-valuemax="' + sm.questions.length + '" aria-valuenow="' + sm.idx + '">' +
       sm.questions.map(function (q, i) {
         var r = sm.results[i];
@@ -3314,7 +3788,7 @@ button.chip:active { transform: scale(.96); }
     var srcText = { giao: 'Bài cô giao cho em', 'goi-y': 'Bài gợi ý cho em', chon: 'Bài luyện', 'xem-thu': 'Xem thử bài luyện' }[plan.source];
     return '<div class="sm-body sm-center">' +
       '<p class="sm-kicker">' + ui.esc(srcText) + '</p>' +
-      '<h1 class="sm-title" id="sm-title">Hôm nay em luyện vần</h1>' +
+      '<h1 class="sm-title" id="sm-title">Hôm nay em luyện ' + D.unitWord(plan.van) + '</h1>' +
       '<div class="sm-van-card"><span class="sm-van">' + ui.esc(plan.vans ? plan.vans.join(', ') : plan.van) + '</span>' +
       ui.speakBtn(plan.vans ? plan.vans.join(', ') : plan.van, 'Nghe vần', 'sm-speak') + '</div>' +
       '<p class="sm-examples">' + examples.map(function (w) { return '<span class="reading">' + ui.vanWord(w, plan.van) + '</span>'; }).join('') + '</p>' +
@@ -3329,7 +3803,8 @@ button.chip:active { transform: scale(.96); }
       else if (r && r.chosen === o) cls = ' is-wrong';
     }
     // Mức có hỗ trợ: tô vần ở mọi phương án để em so sánh, không chỉ tô đáp án đúng.
-    var content = q.showVan && q.type !== 'chon-tu' ? ui.vanWord(o, null) : ui.esc(o);
+    var hl = D.isConsonantUnit(q.van) ? ((V.parse(o) || {}).initial || null) : null;
+    var content = q.showVan && q.type !== 'chon-tu' ? ui.vanWord(o, hl) : ui.esc(o);
     if (q.type === 'chon-tu' && q.showVan) content = ui.vanText(o, [q.van].concat(siblings(q.van)));
     return '<button type="button" class="sm-option' + cls + '" data-sm="answer" data-value="' + ui.esc(o) + '"' + (sm.answered ? ' aria-disabled="true"' : '') + '>' +
       '<span class="reading">' + content + '</span></button>';
@@ -3518,8 +3993,8 @@ button.chip:active { transform: scale(.96); }
           '<span class="game-card-title">' + ui.esc(t.label) + '</span><span class="game-card-desc">' + ui.esc(t.desc) + '</span>' + gamePreview(t.id) + '</label>';
       }).join('') + '</div></fieldset>' +
       '<div class="form-grid">' +
-      '<div class="field"><label for="g-group">Nhóm vần</label><select id="g-group" name="group">' +
-      D.GROUPS.map(function (x) { return '<option value="' + x.id + '"' + (x.id === gv.group ? ' selected' : '') + '>Nhóm ' + x.id + ': ' + ui.esc(x.title) + (x.id > progress ? ' (chưa học)' : '') + '</option>'; }).join('') +
+      '<div class="field"><label for="g-group">Nhóm âm, vần</label><select id="g-group" name="group">' +
+      ui.groupSelect('g-group-sel', 'group', gv.group).replace(/^<select[^>]*>/, '').replace(/<\/select>$/, '') +
       '</select></div>' +
       '<div class="field"><label for="g-stu">Ghi kết quả cho</label><select id="g-stu" name="student">' + ui.studentOptions(gv.studentId, 'Không ghi (chơi thử, cả lớp)') + '</select></div>' +
       '</div>' +
@@ -3560,8 +4035,8 @@ button.chip:active { transform: scale(.96); }
   VV.views.the = {
     render: function (root, params) {
       var word = params[0] || '';
-      var p = V.parse(word);
-      var g = p && D.groupOfVan(p.van);
+      var found = D.findWord(word);
+      var g = found && found.group;
       VV.views['bai-hoc'].render(root, [String(g ? g.id : 1)]);
       if (g) setTimeout(function () { openCard(word); }, 0);
     },
@@ -3572,7 +4047,7 @@ button.chip:active { transform: scale(.96); }
 </script>
 <script>
 /* js/view-lessons.js */
-/* Bài học số: 10 nhóm vần, thẻ vần biết nói, luyện viết trên giấy ô li, in phiếu. */
+/* Bài học số: các nhóm âm, vần của lớp 1, thẻ biết nói, luyện viết trên giấy ô li, in phiếu. */
 (function (VV) {
   'use strict';
   var ui = VV.ui, D = VV.data, S = VV.store, V = VV.viet;
@@ -3585,15 +4060,24 @@ button.chip:active { transform: scale(.96); }
   }
 
   function renderIndex(root) {
+    var cur = D.GROUPS[S.state.classInfo.progress - 1];
     root.innerHTML = '<section class="page"><header class="page-head"><div><h1>Bài học số</h1>' +
-      '<p class="lede">10 nhóm vần theo tiến độ lớp. Mỗi bài có đọc mẫu, thẻ ghép tiếng, câu ngắn và phiếu luyện viết trên giấy ô li.</p></div></header>' +
-      '<ol class="lesson-grid">' + D.GROUPS.map(function (g) {
-        var st = statusOf(g);
-        return '<li><a class="lesson-card is-' + st.id + '" href="#/bai-hoc/' + g.id + '">' +
-          '<span class="lesson-num">Nhóm ' + g.id + '</span>' +
-          '<span class="lesson-vans reading">' + g.vans.map(ui.esc).join('<span class="sep">,</span> ') + '</span>' +
-          '<span class="lesson-status">' + st.label + '</span></a></li>';
-      }).join('') + '</ol></section>';
+      '<p class="lede">' + D.GROUPS.length + ' nhóm âm, vần của lớp 1, xếp theo tiến độ. Mỗi bài có đọc mẫu, thẻ ghép tiếng, câu ngắn và phiếu luyện viết trên giấy ô li.</p></div>' +
+      (cur ? '<a class="btn btn-primary" href="#/bai-hoc/' + cur.id + '">' + ui.icon('book') + 'Mở bài đang học: ' + ui.esc(cur.title) + '</a>' : '') + '</header>' +
+      D.STAGES.map(function (st) {
+        var gs = D.GROUPS.filter(function (g) { return g.stage === st.id; });
+        if (!gs.length) return '';
+        return '<section class="lesson-stage"><h2 class="stage-title">' + ui.esc(st.label) + ' <span class="muted">' + gs.length + ' nhóm</span></h2>' +
+          '<ol class="lesson-grid">' + gs.map(function (g) {
+            var s2 = statusOf(g);
+            return '<li><a class="lesson-card is-' + s2.id + '" href="#/bai-hoc/' + g.id + '"' + (s2.id === 'dang-hoc' ? ' aria-current="step"' : '') + '>' +
+              '<span class="lesson-num">Nhóm ' + g.id + '</span>' +
+              '<span class="lesson-vans reading">' + g.vans.map(ui.esc).join('<span class="sep">,</span> ') + '</span>' +
+              '<span class="lesson-status">' + s2.label + '</span></a></li>';
+          }).join('') + '</ol></section>';
+      }).join('') +
+      '<p class="muted">Thứ tự là gợi ý theo tiến độ phổ biến. Giáo viên ẩn, đổi thứ tự hoặc thêm nhóm cho khớp bộ sách ở <a href="#/cai-dat/noi-dung">Cài đặt, Nội dung bài học</a>.</p>' +
+      '</section>';
   }
 
   // Địa chỉ mở thẻ khi quét mã QR (cần đăng file lên web và nhập địa chỉ trong Cài đặt).
@@ -3616,8 +4100,8 @@ button.chip:active { transform: scale(.96); }
       ? 'Đọc “' + flat + '”, rồi viết vào vở.'
       : 'Đọc “' + flat + '”. Thêm ' + V.TONE_NAME[p.tone] + ' thành “' + word + '”, rồi viết vào vở.';
     return '<article class="van-card">' +
-      '<p class="van-card-sum reading">' + (p.initial ? '<span>' + ui.esc(p.initial) + '</span><span class="plus">+</span>' : '') +
-      '<span class="hl-van">' + ui.esc(van) + '</span></p>' +
+      '<p class="van-card-sum reading">' + (p.initial ? '<span' + (D.isConsonantUnit(van) ? ' class="hl-van"' : '') + '>' + ui.esc(p.initial) + '</span><span class="plus">+</span>' : '') +
+      '<span' + (D.isConsonantUnit(van) ? '' : ' class="hl-van"') + '>' + ui.esc(p.van) + '</span></p>' +
       '<p class="van-card-word reading">' + ui.vanWord(word, van) + '</p>' +
       '<p class="van-card-step">' + ui.esc(step) + '</p>' +
       (withQr ? qrHTML(word) : '') +
@@ -3637,19 +4121,19 @@ button.chip:active { transform: scale(.96); }
     root.innerHTML = '<section class="page lesson">' +
       '<nav class="crumbs" aria-label="Vị trí"><a href="#/bai-hoc">Bài học số</a><span aria-hidden="true">/</span><span aria-current="page">Nhóm ' + g.id + '</span></nav>' +
       '<header class="page-head"><div><h1>Nhóm ' + g.id + ': <span class="reading">' + ui.esc(g.title) + '</span></h1>' +
-      '<p class="lede">' + st.label + '. ' + g.vans.length + ' vần, ' + countWords(g) + ' tiếng, ' + g.phrases.length + ' từ ngữ và ' + g.sentences.length + ' câu.</p></div>' +
+      '<p class="lede">' + st.label + '. ' + g.vans.length + (g.kind === 'am' ? ' âm, ' : ' vần, ') + countWords(g) + ' tiếng, ' + g.phrases.length + ' từ ngữ' + (g.sentences.length ? ' và ' + g.sentences.length + ' câu' : '') + '.</p></div>' +
       '<div class="btn-row">' +
       '<button type="button" class="btn btn-primary" data-act="practice">' + ui.icon('play') + 'Cho học sinh luyện</button>' +
       (g.id !== S.state.classInfo.progress ? '<button type="button" class="btn" data-act="set-progress">Đặt làm bài đang học</button>' : '') +
-      '<button type="button" class="btn" data-act="print-cards">' + ui.icon('printer') + 'In thẻ vần</button>' +
+      '<button type="button" class="btn" data-act="print-cards">' + ui.icon('printer') + 'In thẻ ghép tiếng</button>' +
       '<button type="button" class="btn" data-act="print-sheet">' + ui.icon('printer') + 'In phiếu luyện viết</button></div></header>' +
       (ui.canSpeak() ? '' : '<div class="banner banner-soft">Máy này chưa có giọng đọc tiếng Việt nên nút nghe sẽ không phát âm. Giáo viên đọc mẫu trực tiếp, hoặc cài giọng tiếng Việt cho hệ điều hành rồi mở lại trang.</div>') +
 
-      '<section class="panel"><h2 class="panel-title">Vần</h2><div class="van-row">' +
+      '<section class="panel"><h2 class="panel-title">' + (g.kind === 'am' ? 'Âm và chữ' : 'Vần') + '</h2><div class="van-row">' +
       g.vans.map(function (v) {
-        var letters = v.split('');
+        var parts = D.isConsonantUnit(v) ? (v.length > 1 ? 'chữ ghép ' + v.split('').join(' + ') : 'âm đầu') : (v.length > 1 ? v.split('').join(' + ') : 'nguyên âm');
         return '<div class="van-big"><span class="van-big-glyph reading">' + ui.esc(v) + '</span>' +
-          '<span class="van-big-parts">' + letters.map(ui.esc).join(' + ') + '</span>' + ui.speakBtn(v, 'Nghe vần ' + v) + '</div>';
+          '<span class="van-big-parts">' + ui.esc(parts) + '</span>' + ui.speakBtn(v, 'Nghe ' + D.unitLabel(v)) + '</div>';
       }).join('') + '</div></section>' +
 
       '<section class="panel"><h2 class="panel-title">Tiếng</h2>' +
@@ -3659,7 +4143,7 @@ button.chip:active { transform: scale(.96); }
           '</ul></div>';
       }).join('') + '</section>' +
 
-      '<section class="panel"><h2 class="panel-title">Thẻ vần biết nói</h2>' +
+      '<section class="panel"><h2 class="panel-title">Thẻ biết nói</h2>' +
       '<p class="muted">Ghép âm đầu với vần, đọc tiếng không dấu, thêm dấu thanh rồi viết. Bản in có đủ ' + countWords(g) + ' thẻ' +
       (S.state.classInfo.siteUrl ? ', mỗi thẻ có mã QR mở bài nghe trên điện thoại.' : '. <a href="#/cai-dat/qr">Nhập địa chỉ web</a> để in thẻ có mã QR.') + '</p>' +
       '<div class="card-grid">' + g.vans.map(function (v) { return cardHTML(g.words[v][0], v) + cardHTML(g.words[v][1], v); }).join('') + '</div></section>' +
@@ -3667,8 +4151,10 @@ button.chip:active { transform: scale(.96); }
       '<div class="two-col">' +
       '<section class="panel"><h2 class="panel-title">Từ ngữ</h2><ul class="phrase-list">' +
       g.phrases.map(function (ph) { return '<li><span class="reading">' + ui.vanText(ph, g.vans) + '</span>' + ui.speakBtn(ph) + '</li>'; }).join('') + '</ul></section>' +
-      '<section class="panel"><h2 class="panel-title">Câu</h2><ul class="phrase-list sentences">' +
-      g.sentences.map(function (s) { return '<li><span class="reading">' + ui.vanText(s, g.vans) + '</span>' + ui.speakBtn(s) + '</li>'; }).join('') + '</ul></section>' +
+      (g.sentences.length
+        ? '<section class="panel"><h2 class="panel-title">Câu</h2><ul class="phrase-list sentences">' +
+          g.sentences.map(function (s) { return '<li><span class="reading">' + ui.vanText(s, g.vans) + '</span>' + ui.speakBtn(s) + '</li>'; }).join('') + '</ul></section>'
+        : '') +
       '</div>' +
 
       '<section class="panel"><h2 class="panel-title">Luyện viết trên ô li</h2>' +
@@ -3763,7 +4249,7 @@ button.chip:active { transform: scale(.96); }
   function printCards(g) {
     var cards = [];
     g.vans.forEach(function (v) { g.words[v].forEach(function (w) { cards.push(cardHTML(w, v, true)); }); });
-    ui.printHTML('<h1 class="print-title">Thẻ vần nhóm ' + g.id + ': ' + ui.esc(g.title) + '</h1><div class="print-cards">' + cards.join('') + '</div>', 'Thẻ vần nhóm ' + g.id);
+    ui.printHTML('<h1 class="print-title">Thẻ ghép tiếng nhóm ' + g.id + ': ' + ui.esc(g.title) + '</h1><div class="print-cards">' + cards.join('') + '</div>', 'Thẻ vần nhóm ' + g.id);
   }
 
   function oliRows(rows) {
@@ -3779,7 +4265,7 @@ button.chip:active { transform: scale(.96); }
   }
   function printSheet(g) {
     var items = g.vans.concat(g.vans.map(function (v) { return g.words[v][0]; }), g.phrases.slice(0, 2));
-    ui.printHTML(writingSheetHTML('Phiếu luyện viết nhóm ' + g.id + ': ' + g.title, items, ['Viết vần trước, rồi viết tiếng.', 'Mỗi chữ mẫu viết hai dòng.']), 'Phiếu luyện viết nhóm ' + g.id);
+    ui.printHTML(writingSheetHTML('Phiếu luyện viết nhóm ' + g.id + ': ' + g.title, items, [g.kind === 'am' ? 'Viết chữ ghi âm trước, rồi viết tiếng.' : 'Viết vần trước, rồi viết tiếng.', 'Mỗi chữ mẫu viết hai dòng.']), 'Phiếu luyện viết nhóm ' + g.id);
   }
 
   var current = 1;
@@ -3829,7 +4315,6 @@ button.chip:active { transform: scale(.96); }
   var busy = null; // { tool, controller }
   var tab = TABS[0];
 
-  function learnedVans() { return D.vansUpTo(S.state.classInfo.progress); }
   function currentGroup() { return D.GROUPS[S.state.classInfo.progress - 1]; }
 
   function formState(tool) {
@@ -3837,21 +4322,29 @@ button.chip:active { transform: scale(.96); }
       var g = currentGroup();
       forms[tool] = {
         vans: g.vans.slice(),
-        objective: 'Đọc đúng, viết đúng các tiếng có vần ' + g.vans.join(', ') + '; nhận ra vần trong tiếng, từ và câu.',
+        objective: defaultObjective(g.vans),
         errors: [], perLevel: 3, topic: D.TOPICS[0], sentences: 3, studentId: ''
       };
     }
     return forms[tool];
   }
 
+  function defaultObjective(vans) {
+    var labels = vans.map(D.unitLabel).join(', ');
+    return 'Đọc đúng, viết đúng các tiếng có ' + labels + '; nhận ra chúng trong tiếng, từ và câu.';
+  }
+
   // ---------- Biểu mẫu ----------
+  // Chọn nhóm trước, rồi chọn âm, vần trong nhóm đó (gọn hơn một dãy dài các nút).
   function vanChips(f) {
-    var learned = learnedVans();
-    return '<fieldset class="field"><legend>Vần trọng tâm</legend><div class="chip-check">' +
-      learned.map(function (v) {
+    var g = D.groupOfVan(f.vans[0]) || currentGroup();
+    return '<div class="field"><label for="f-group">Nhóm</label>' + ui.groupSelect('f-group', 'group', g.id) + '</div>' +
+      '<fieldset class="field"><legend>Âm, vần trọng tâm</legend><div class="chip-check">' +
+      g.vans.map(function (v) {
         var id = 'v-' + v;
         return '<input type="checkbox" id="' + id + '" name="vans" value="' + ui.esc(v) + '"' + (f.vans.indexOf(v) !== -1 ? ' checked' : '') + '><label for="' + id + '" class="reading">' + ui.esc(v) + '</label>';
-      }).join('') + '</div><p class="hint">Chỉ hiện vần đã học tới nhóm ' + S.state.classInfo.progress + '. Đổi tiến độ lớp trong Cài đặt.</p></fieldset>';
+      }).join('') + '</div>' +
+      (g.id > S.state.classInfo.progress ? '<p class="hint">Nhóm này lớp chưa học: bộ kiểm tra sẽ đánh dấu tiếng của nhóm là ngoài kho.</p>' : '') + '</fieldset>';
   }
   function errorChips(f, list, legend) {
     return '<fieldset class="field"><legend>' + legend + ' <span class="optional">(không bắt buộc)</span></legend><div class="chip-check">' +
@@ -4258,6 +4751,13 @@ button.chip:active { transform: scale(.96); }
     var el = e.target;
     var assistForm = el.closest('form[data-form="assist"]');
     if (assistForm) readForm(assistForm, tab.tool);
+    if (assistForm && el.name === 'group') {
+      var fg = formState(tab.tool), grp = D.GROUPS[Number(el.value) - 1];
+      fg.vans = grp.vans.slice();
+      fg.objective = defaultObjective(fg.vans);
+      VV.app.refresh();
+      return;
+    }
     if (el.hasAttribute('data-answer')) {
       var i = Number(el.getAttribute('data-answer'));
       var t = drafts[tab.tool].data.tasks[i];
@@ -4474,16 +4974,18 @@ button.chip:active { transform: scale(.96); }
   function phieuSetupHTML() {
     var st = phieu.setup;
     if (!st.studentId) st.studentId = firstStudent();
-    if (!st.vans) st.vans = D.GROUPS[S.state.classInfo.progress - 1].vans.slice();
-    var learned = D.vansUpTo(Math.min(10, S.state.classInfo.progress + 1));
+    if (!st.group || !D.GROUPS[st.group - 1]) st.group = S.state.classInfo.progress;
+    var g = D.GROUPS[st.group - 1];
+    if (!st.vans || !st.vans.some(function (v) { return g.vans.indexOf(v) !== -1; })) st.vans = g.vans.slice();
     return '<form class="panel" data-form="phieu-setup">' +
-      '<p class="muted">Giáo viên nghe học sinh đọc từng tiếng và ghi kết quả. Mỗi vần 3 hoặc 6 tiếng. Kết quả cập nhật bản đồ âm vần ngay.</p>' +
-      '<div class="form-grid">' + studentField('ph-stu', st.studentId) + phaseField('ph-phase', st.phase) + '</div>' +
-      '<fieldset class="field"><legend>Vần cần đo</legend><div class="chip-check">' +
-      learned.map(function (v) {
+      '<p class="muted">Giáo viên nghe học sinh đọc từng tiếng và ghi kết quả. Mỗi âm, vần 3 hoặc 6 tiếng. Kết quả cập nhật bản đồ âm vần ngay.</p>' +
+      '<div class="form-grid">' + studentField('ph-stu', st.studentId) + phaseField('ph-phase', st.phase) +
+      '<div class="field"><label for="ph-group">Nhóm</label>' + ui.groupSelect('ph-group', 'group', st.group) + '</div></div>' +
+      '<fieldset class="field"><legend>Âm, vần cần đo</legend><div class="chip-check">' +
+      g.vans.map(function (v) {
         return '<input type="checkbox" id="ph-v-' + v + '" name="vans" value="' + ui.esc(v) + '"' + (st.vans.indexOf(v) !== -1 ? ' checked' : '') + '><label for="ph-v-' + v + '" class="reading">' + ui.esc(v) + '</label>';
       }).join('') + '</div></fieldset>' +
-      '<fieldset class="field"><legend>Số tiếng mỗi vần</legend>' + ui.segmented('ph-per', [{ id: '3', label: '3 tiếng' }, { id: '6', label: '6 tiếng' }], String(st.per), 'Số tiếng mỗi vần') + '</fieldset>' +
+      '<fieldset class="field"><legend>Số tiếng mỗi âm, vần</legend>' + ui.segmented('ph-per', [{ id: '3', label: '3 tiếng' }, { id: '6', label: '6 tiếng' }], String(st.per), 'Số tiếng mỗi âm, vần') + '</fieldset>' +
       '<div class="btn-row"><button type="submit" class="btn btn-primary">Bắt đầu ghi phiếu</button></div></form>';
   }
 
@@ -4526,7 +5028,7 @@ button.chip:active { transform: scale(.96); }
     st.vans = Array.prototype.map.call(form.querySelectorAll('input[name="vans"]:checked'), function (i) { return i.value; });
     st.per = Number(form.querySelector('input[name="ph-per"]:checked').value);
     if (!st.studentId) { ui.toast('Chọn học sinh.', 'error'); return; }
-    if (!st.vans.length) { ui.toast('Chọn ít nhất một vần.', 'error'); return; }
+    if (!st.vans.length) { ui.toast('Chọn ít nhất một âm hoặc vần.', 'error'); return; }
     var items = [];
     st.vans.forEach(function (v) {
       var g = D.groupOfVan(v);
@@ -4567,17 +5069,16 @@ button.chip:active { transform: scale(.96); }
   function abHTML() {
     if (!ab.studentId) ab.studentId = firstStudent();
     if (!ab.scope) ab.scope = S.state.classInfo.progress;
-    if (!ab.items) ab.items = S.abForm(ab.form, ab.scope).map(function (w) { return { tieng: w, van: V.parse(w).van, result: null, error: '' }; });
+    if (!ab.items) ab.items = S.abForm(ab.form, ab.scope).map(function (it) { return { tieng: it.tieng, van: it.van, result: null, error: '' }; });
     var score = ab.items.filter(function (x) { return x.result === true; }).length;
     var marked = ab.items.filter(function (x) { return x.result !== null; }).length;
     var tests = S.state.tests.slice().sort(function (a, b) { return b.date - a.date; });
     return '<form class="panel" data-form="ab">' +
-      '<p class="muted">Hai dạng A và B tương đương: cùng số tiếng mỗi vần, khác tiếng. Dùng A cho đầu vào, B cho đầu ra để so sánh tiến bộ mà học sinh không học thuộc bài.</p>' +
+      '<p class="muted">Hai dạng A và B tương đương: cùng các âm, vần, khác tiếng. Đã sang giai đoạn vần thì chỉ đo vần. Dùng A cho đầu vào, B cho đầu ra để so sánh tiến bộ mà học sinh không học thuộc bài.</p>' +
       '<div class="form-grid">' + studentField('ab-stu', ab.studentId) +
       '<fieldset class="field"><legend>Thời điểm</legend>' + ui.segmented('ab-phase', [{ id: 'dau-vao', label: 'Đầu vào' }, { id: 'dau-ra', label: 'Đầu ra' }], ab.phase, 'Thời điểm') + '</fieldset>' +
       '<fieldset class="field"><legend>Dạng bài</legend>' + ui.segmented('ab-form', [{ id: 'A', label: 'Dạng A' }, { id: 'B', label: 'Dạng B' }], ab.form, 'Dạng bài') + '</fieldset>' +
-      '<div class="field"><label for="ab-scope">Phạm vi</label><select id="ab-scope" name="scope">' +
-      D.GROUPS.map(function (g) { return '<option value="' + g.id + '"' + (g.id === ab.scope ? ' selected' : '') + '>Nhóm 1 đến ' + g.id + '</option>'; }).join('') + '</select></div></div>' +
+      '<div class="field"><label for="ab-scope">Đo các âm, vần đã học tới</label>' + ui.groupSelect('ab-scope', 'scope', ab.scope) + '</div></div>' +
       '<div class="ab-grid">' + ab.items.map(function (x, i) {
         return '<div class="ab-cell' + (x.result === true ? ' is-ok' : x.result === false ? ' is-miss' : '') + '">' +
           '<span class="ab-num num">' + (i + 1) + '</span><span class="ab-word reading">' + ui.esc(x.tieng) + '</span>' +
@@ -4663,9 +5164,10 @@ button.chip:active { transform: scale(.96); }
     S.state.library.filter(function (x) { return x.kind === 'truyen'; }).forEach(function (x) {
       out.push({ id: x.id, title: x.title, text: x.content.story, questions: x.content.questions.map(function (q) { return q.q; }) });
     });
-    D.GROUPS.slice(0, S.state.classInfo.progress).forEach(function (g) {
+    D.GROUPS.slice(0, S.state.classInfo.progress).reverse().forEach(function (g) {
+      if (!g.sentences.length) return;
       out.push({ id: 'g' + g.id, title: 'Câu nhóm ' + g.id + ' (' + g.title + ')', text: g.sentences.join(' '),
-        questions: ['Câu đầu tiên nói về ai?', 'Em hãy đọc lại câu có tiếng vần ' + g.vans[0] + '.'] });
+        questions: ['Câu đầu tiên nói về ai?', 'Em hãy đọc lại câu có tiếng chứa ' + D.unitLabel(g.vans[0]) + '.'] });
     });
     return out;
   }
@@ -4754,6 +5256,7 @@ button.chip:active { transform: scale(.96); }
     // Liên kết sâu: #/danh-gia/phieu/<mã HS>/<nhóm>/<vần>
     if (tab.id === 'phieu' && params[1] && !phieu.sess) {
       phieu.setup.studentId = params[1];
+      if (params[2]) phieu.setup.group = Number(params[2]);
       if (params[3]) phieu.setup.vans = [params[3]];
       history.replaceState(null, '', '#/danh-gia/phieu');
     }
@@ -4852,6 +5355,7 @@ button.chip:active { transform: scale(.96); }
       if (f === 'phieu-setup') {
         if (t.name === 'studentId') phieu.setup.studentId = t.value;
         if (t.name === 'ph-phase') phieu.setup.phase = t.value;
+        if (t.name === 'group') { phieu.setup.group = Number(t.value); phieu.setup.vans = null; VV.app.refresh(); }
         return;
       }
       if (t.name === 'ph-err') { phieu.sess.items[phieu.sess.idx].error = t.value; if (phieu.sess.idx < phieu.sess.items.length - 1) { phieu.sess.idx++; } VV.app.refresh(); return; }
@@ -5027,7 +5531,13 @@ button.chip:active { transform: scale(.96); }
   // Biểu đồ cặp cột ngang: đầu vào và đầu ra theo nhóm vần.
   function prePostChart(studentId) {
     var progress = S.state.classInfo.progress;
-    var rows = D.GROUPS.slice(0, progress).map(function (g) {
+    // Chỉ vẽ các nhóm đã có số liệu đầu vào hoặc đầu ra.
+    var withData = D.GROUPS.slice(0, progress).filter(function (g) { var pp = S.groupPrePost(g.id, studentId); return pp.pre.total || pp.post.total; });
+    if (!withData.length) {
+      return '<figure class="chart"><figcaption class="chart-head"><span class="chart-title">Tỉ lệ đọc đúng theo nhóm</span></figcaption>' +
+        '<p class="muted">Chưa có kết quả ghi thời điểm đầu vào hoặc đầu ra. Dùng phiếu đọc nhanh hoặc bài đo A/B và chọn thời điểm.</p></figure>';
+    }
+    var rows = withData.map(function (g) {
       var pp = S.groupPrePost(g.id, studentId);
       function bar(cls, r, label) {
         if (!r.total) return '<div class="pp-bar is-none"><span class="pp-val">' + label + ': chưa đo</span></div>';
@@ -5038,7 +5548,7 @@ button.chip:active { transform: scale(.96); }
       return '<div class="pp-row"><span class="pp-label">Nhóm ' + g.id + ' <span class="reading">' + ui.esc(g.title) + '</span></span>' +
         '<div class="pp-bars">' + bar('is-pre', pp.pre, 'Đầu vào') + bar('is-post', pp.post, 'Đầu ra') + '</div></div>';
     }).join('');
-    return '<figure class="chart"><figcaption class="chart-head"><span class="chart-title">Tỉ lệ đọc đúng theo nhóm vần</span>' +
+    return '<figure class="chart"><figcaption class="chart-head"><span class="chart-title">Tỉ lệ đọc đúng theo nhóm</span>' +
       '<span class="legend-inline"><span class="key is-pre"></span>Đầu vào<span class="key is-post"></span>Đầu ra</span></figcaption>' +
       '<div class="pp-chart">' + rows + '</div>' +
       '<p class="chart-note">Tính từ phiếu đọc nhanh và bài đo A/B có ghi thời điểm đầu vào hoặc đầu ra. Rê chuột hoặc chạm vào cột để xem số tiếng.</p></figure>';
@@ -5278,9 +5788,8 @@ button.chip:active { transform: scale(.96); }
     return '<section class="panel" id="lop" aria-labelledby="lop-title"><h2 class="panel-title" id="lop-title">Lớp học</h2>' +
       '<form data-form="class"><div class="form-grid">' +
       '<div class="field"><label for="cl-name">Tên lớp</label><input id="cl-name" name="name" value="' + ui.esc(c.name) + '" autocomplete="off"></div>' +
-      '<div class="field"><label for="cl-prog">Lớp đã học tới</label><select id="cl-prog" name="progress">' +
-      D.GROUPS.map(function (g) { return '<option value="' + g.id + '"' + (g.id === c.progress ? ' selected' : '') + '>Nhóm ' + g.id + ': ' + ui.esc(g.title) + '</option>'; }).join('') + '</select>' +
-      '<p class="hint">Quyết định kho tiếng, vần được gợi ý và phạm vi bài đo.</p></div></div>' +
+      '<div class="field"><label for="cl-prog">Lớp đang học</label>' + ui.groupSelect('cl-prog', 'progress', c.progress) +
+      '<p class="hint">Quyết định kho tiếng, âm, vần được gợi ý và phạm vi bài đo.</p></div></div>' +
       '<div class="btn-row"><button type="submit" class="btn btn-primary">Lưu thông tin lớp</button></div></form>' +
       '<h3 class="sub-title">Học sinh</h3><p class="muted">Dùng mã thay cho họ tên để bảo vệ dữ liệu trẻ em. Ghi chú chỉ lưu trên máy này.</p>' +
       '<ul class="student-list">' + S.state.students.map(function (s) {
@@ -5294,24 +5803,25 @@ button.chip:active { transform: scale(.96); }
 
   function khoSection() {
     var c = S.state.classInfo;
-    var vans = D.BASE_VANS.concat(D.vansUpTo(c.progress));
+    var k = S.kho();
+    var vans = Array.from(k.vans);
     return '<section class="panel" id="kho" aria-labelledby="kho-title"><h2 class="panel-title" id="kho-title">Kho tiếng</h2>' +
       '<p class="muted">Tiếng có vần dưới đây được xem là đã học. Trợ lý AI và bộ kiểm tra dùng danh sách này để đánh dấu tiếng vượt nội dung đã học.</p>' +
-      '<ul class="chips kho-chips">' + vans.map(function (v) { return '<li class="chip chip-static reading">' + ui.esc(v) + '</li>'; }).join('') + '</ul>' +
+      '<ul class="chips kho-chips" aria-label="Vần đã học">' + vans.map(function (v) { return '<li class="chip chip-static reading">' + ui.esc(v) + '</li>'; }).join('') + '</ul>' +
+      (k.initials ? '<p class="muted">Lớp đang học âm nên chỉ chấp nhận các âm đầu đã học:</p><ul class="chips kho-chips" aria-label="Âm đầu đã học">' +
+        Array.from(k.initials).map(function (v) { return '<li class="chip chip-static reading">' + ui.esc(v) + '</li>'; }).join('') + '</ul>' : '') +
       '<form data-form="kho"><div class="field"><label for="kho-extra">Tiếng bổ sung đã duyệt</label>' +
       '<textarea id="kho-extra" name="extra" rows="3" class="reading" spellcheck="false" placeholder="Ví dụ: Lan, Nam…">' + ui.esc(c.extraWords.join(', ')) + '</textarea>' +
       '<p class="hint">Cách nhau bằng dấu phẩy hoặc xuống dòng.</p></div>' +
       '<div class="btn-row"><button type="submit" class="btn btn-primary">Lưu kho tiếng</button></div></form></section>';
   }
 
-  var editGroup = 1;
-
   function qrSection() {
     var url = S.state.classInfo.siteUrl || '';
     var sample = url ? url.replace(/#.*$/, '') + '#/the/' + encodeURIComponent('bàn') : '';
     var preview = '';
     if (sample) { try { preview = '<div class="qr-preview">' + VV.qr.svg(sample, { label: 'Mã QR thử cho thẻ bàn' }) + '<p class="hint">Quét thử mã này bằng điện thoại: phải mở ra thẻ “bàn”.</p></div>'; } catch (e) { preview = '<p class="hint">' + ui.esc(e.message) + '</p>'; } }
-    return '<section class="panel" id="qr" aria-labelledby="qr-title"><h2 class="panel-title" id="qr-title">Mã QR cho thẻ vần</h2>' +
+    return '<section class="panel" id="qr" aria-labelledby="qr-title"><h2 class="panel-title" id="qr-title">Mã QR cho thẻ ghép tiếng</h2>' +
       '<p class="muted">Mã QR trên thẻ giấy chỉ mở được khi file này được đăng lên một địa chỉ web (ví dụ GitHub Pages, Google Sites, máy chủ của trường). Dán địa chỉ đó vào đây; thẻ in ra sẽ có mã QR mở đúng thẻ trên điện thoại. Chưa có địa chỉ thì thẻ in không kèm mã.</p>' +
       '<form data-form="site" class="qr-form"><div class="field"><label for="site-url">Địa chỉ trang Vần vui AI đã đăng</label>' +
       '<input id="site-url" name="siteUrl" type="url" inputmode="url" spellcheck="false" autocomplete="off" placeholder="https://truong-cua-ban.github.io/van-vui-ai.html…" value="' + ui.esc(url) + '"></div>' +
@@ -5319,26 +5829,57 @@ button.chip:active { transform: scale(.96); }
       preview + '</section>';
   }
 
-  // Sửa tiếng, từ, câu của từng nhóm vần cho khớp bộ sách đang dùng.
+  // ---------- Nội dung bài học: danh sách nhóm và ô sửa ----------
+  var editKey = null;
+  function findGroup(key) { return D.allGroups().filter(function (g) { return g.key === key; })[0]; }
+  function stageLabel(id) { return D.label(D.STAGES, id); }
+
+  function groupListHTML() {
+    var all = D.allGroups();
+    var used = all.filter(function (g) { return !g.hidden; }).length;
+    return '<details class="details group-list-wrap"' + (S.state.curriculum.order || S.state.curriculum.hidden.length || S.state.curriculum.custom.length ? ' open' : '') + '>' +
+      '<summary>Danh sách nhóm: ' + used + ' nhóm đang dùng' + (all.length > used ? ', ' + (all.length - used) + ' nhóm ẩn' : '') + '</summary>' +
+      '<p class="muted">Bỏ chọn “Dùng” để ẩn nhóm lớp không học. Dùng mũi tên để đổi thứ tự cho khớp bộ sách. Kết quả đã ghi không bị mất khi ẩn hay đổi thứ tự.</p>' +
+      '<ol class="group-list">' + all.map(function (g, i) {
+        return '<li class="group-item' + (g.hidden ? ' is-hidden' : '') + '">' +
+          '<label class="check"><input type="checkbox" data-grp-use="' + g.key + '"' + (g.hidden ? '' : ' checked') + '><span>Dùng</span></label>' +
+          '<span class="group-item-name"><span class="group-item-num">' + (g.hidden ? 'Ẩn' : 'Nhóm ' + g.id) + '</span>' +
+          '<span class="reading">' + ui.esc(g.title) + '</span><span class="group-item-stage">' + ui.esc(stageLabel(g.stage)) + (g.edited ? ', đã sửa' : '') + '</span></span>' +
+          '<span class="group-item-actions">' +
+          '<button type="button" class="btn-icon" data-act="grp-up" data-key="' + g.key + '" aria-label="Đưa nhóm ' + ui.esc(g.title) + ' lên"' + (i === 0 ? ' disabled' : '') + '>' + ui.icon('arrowUp') + '</button>' +
+          '<button type="button" class="btn-icon" data-act="grp-down" data-key="' + g.key + '" aria-label="Đưa nhóm ' + ui.esc(g.title) + ' xuống"' + (i === all.length - 1 ? ' disabled' : '') + '>' + ui.icon('arrowDown') + '</button>' +
+          '<button type="button" class="btn btn-sm" data-act="grp-edit" data-key="' + g.key + '">Sửa</button></span></li>';
+      }).join('') + '</ol>' +
+      '<div class="btn-row"><button type="button" class="btn" data-act="grp-add">' + ui.icon('plus') + 'Thêm nhóm vần</button>' +
+      (S.state.curriculum.order || S.state.curriculum.hidden.length ? '<button type="button" class="btn btn-ghost" data-act="grp-reset-order">Trở về thứ tự gợi ý</button>' : '') + '</div></details>';
+  }
+
   function contentSection() {
-    var g = D.GROUPS[editGroup - 1];
-    var custom = !!S.state.curriculum[g.id];
+    var g = (editKey && findGroup(editKey)) || D.GROUPS[S.state.classInfo.progress - 1];
+    editKey = g.key;
+    var isCustom = g.stage === 'tu-them';
+    var unitName = function (v) { return D.isConsonantUnit(v) ? 'âm' : 'vần'; };
     return '<section class="panel" id="noi-dung" aria-labelledby="nd-title"><h2 class="panel-title" id="nd-title">Nội dung bài học</h2>' +
-      '<p class="muted">Sửa tiếng, từ ngữ và câu của từng nhóm cho khớp bộ sách và những gì lớp đã học. Mỗi tiếng phải đúng vần của dòng đó; câu chỉ nên dùng vần đã học tới nhóm này. Danh sách vần giữ nguyên để không lệch hồ sơ đã ghi.</p>' +
-      '<form data-form="content">' +
-      '<div class="field field-inline"><label for="nd-group">Nhóm</label><select id="nd-group" name="group">' +
-      D.GROUPS.map(function (x) { return '<option value="' + x.id + '"' + (x.id === g.id ? ' selected' : '') + '>Nhóm ' + x.id + ': ' + ui.esc(x.title) + (S.state.curriculum[x.id] ? ' (đã sửa)' : '') + '</option>'; }).join('') + '</select></div>' +
+      '<p class="muted">Chỉnh cho khớp bộ sách và những gì lớp đã học: ẩn hoặc đổi thứ tự nhóm, thêm nhóm vần, sửa tiếng, từ, câu của từng nhóm.</p>' +
+      groupListHTML() +
+      '<form data-form="content" class="content-form">' +
+      '<div class="field field-inline"><label for="nd-group">Sửa nhóm</label><select id="nd-group" name="groupKey">' +
+      D.allGroups().map(function (x) { return '<option value="' + x.key + '"' + (x.key === g.key ? ' selected' : '') + '>' + (x.hidden ? 'Ẩn' : 'Nhóm ' + x.id) + ': ' + ui.esc(x.title) + (x.edited ? ' (đã sửa)' : '') + '</option>'; }).join('') + '</select></div>' +
       '<div class="form-grid">' + g.vans.map(function (v) {
-        return '<div class="field"><label for="nd-w-' + v + '">Tiếng vần <span class="reading">' + ui.esc(v) + '</span></label>' +
-          '<textarea id="nd-w-' + v + '" name="w-' + v + '" rows="2" class="reading" spellcheck="false">' + ui.esc(g.words[v].join(', ')) + '</textarea><p class="hint">Từ 4 đến 8 tiếng, cách nhau dấu phẩy.</p></div>';
+        return '<div class="field"><label for="nd-w-' + v + '">Tiếng có ' + unitName(v) + ' <span class="reading">' + ui.esc(v) + '</span></label>' +
+          '<textarea id="nd-w-' + v + '" name="w-' + v + '" rows="2" class="reading" spellcheck="false">' + ui.esc(g.words[v].join(', ')) + '</textarea><p class="hint">Từ 2 đến 8 tiếng, cách nhau dấu phẩy.</p></div>';
       }).join('') + '</div>' +
-      '<div class="form-grid"><div class="field"><label for="nd-ph">Từ ngữ (mỗi dòng một từ)</label><textarea id="nd-ph" name="phrases" rows="6" class="reading" spellcheck="false">' + ui.esc(g.phrases.join('\n')) + '</textarea></div>' +
-      '<div class="field"><label for="nd-se">Câu (mỗi dòng một câu)</label><textarea id="nd-se" name="sentences" rows="6" class="reading" spellcheck="false">' + ui.esc(g.sentences.join('\n')) + '</textarea></div></div>' +
-      '<div class="field"><label for="nd-fill">Câu điền từ (mỗi dòng: câu có ___ | ba lựa chọn cách nhau dấu phẩy | đáp án)</label>' +
-      '<textarea id="nd-fill" name="fill" rows="4" class="reading" spellcheck="false">' + ui.esc(g.fill.map(function (f) { return f.text + ' | ' + f.options.join(', ') + ' | ' + f.answer; }).join('\n')) + '</textarea></div>' +
+      '<div class="form-grid"><div class="field"><label for="nd-ph">Từ ngữ (mỗi dòng một từ)</label><textarea id="nd-ph" name="phrases" rows="5" class="reading" spellcheck="false">' + ui.esc(g.phrases.join('\n')) + '</textarea></div>' +
+      '<div class="field"><label for="nd-se">Câu (mỗi dòng một câu) <span class="optional">(không bắt buộc)</span></label><textarea id="nd-se" name="sentences" rows="5" class="reading" spellcheck="false">' + ui.esc(g.sentences.join('\n')) + '</textarea></div></div>' +
+      '<div class="field"><label for="nd-fill">Câu điền từ <span class="optional">(không bắt buộc; mỗi dòng: câu có ___ | các lựa chọn cách nhau dấu phẩy | đáp án)</span></label>' +
+      '<textarea id="nd-fill" name="fill" rows="3" class="reading" spellcheck="false">' + ui.esc(g.fill.map(function (f) { return f.text + ' | ' + f.options.join(', ') + ' | ' + f.answer; }).join('\n')) + '</textarea></div>' +
       '<div id="nd-issues"></div>' +
-      '<div class="btn-row"><button type="submit" class="btn btn-primary">Lưu nội dung nhóm ' + g.id + '</button>' +
-      (custom ? '<button type="button" class="btn btn-ghost" data-act="reset-group">Khôi phục nội dung gốc</button>' : '') + '</div></form></section>';
+      '<div class="btn-row"><button type="submit" class="btn btn-primary">Lưu nhóm ' + ui.esc(g.title) + '</button>' +
+      (g.edited && !isCustom ? '<button type="button" class="btn btn-ghost" data-act="reset-group">Khôi phục nội dung gốc</button>' : '') +
+      (isCustom ? '<button type="button" class="btn btn-danger" data-act="grp-delete">Xóa nhóm này</button>' : '') + '</div></form>' +
+      '<fieldset class="field tone-style"><legend>Cách đặt dấu với oa, oe, uy</legend>' +
+      ui.segmented('tone-style', [{ id: 'moi', label: 'Kiểu mới: hoà, khoẻ, thuỷ' }, { id: 'cu', label: 'Kiểu cũ: hòa, khỏe, thủy' }], S.state.curriculum.toneStyle || 'moi', 'Cách đặt dấu') +
+      '<p class="hint">Chọn theo sách lớp đang dùng. Ảnh hưởng tới tiếng app tự ghép trong trò chơi và bài tập.</p></fieldset></section>';
   }
 
   function readContent(form, g) {
@@ -5347,18 +5888,18 @@ button.chip:active { transform: scale(.96); }
     g.vans.forEach(function (v) {
       var list = form['w-' + v].value.split(/[,\n]+/).map(function (x) { return x.trim().toLowerCase(); }).filter(Boolean);
       list = list.filter(function (x, i) { return list.indexOf(x) === i; });
-      if (list.length < 4 || list.length > 8) issues.push('Vần ' + v + ' cần từ 4 đến 8 tiếng (đang có ' + list.length + ').');
+      var name = D.isConsonantUnit(v) ? 'Âm ' : 'Vần ';
+      if (list.length < 2 || list.length > 8) issues.push(name + v + ' cần từ 2 đến 8 tiếng (đang có ' + list.length + ').');
       list.forEach(function (w) {
         var p = VV.viet.parse(w);
         if (!p) issues.push('“' + w + '” không phải một tiếng hợp lệ.');
-        else if (p.van !== v) issues.push('“' + w + '” có vần ' + p.van + ', không phải vần ' + v + '.');
+        else if (!D.matches(w, v)) issues.push('“' + w + '” không có ' + (D.isConsonantUnit(v) ? 'âm ' : 'vần ') + v + (D.isConsonantUnit(v) ? '' : ' (vần của tiếng này là ' + p.van + ')') + '.');
       });
       words[v] = list;
     });
     function lines(name) { return form[name].value.split('\n').map(function (x) { return x.trim(); }).filter(Boolean); }
     var phrases = lines('phrases'), sentences = lines('sentences');
-    if (phrases.length < 2) issues.push('Cần ít nhất 2 từ ngữ.');
-    if (sentences.length < 1) issues.push('Cần ít nhất 1 câu.');
+    if (!phrases.length) warns.push('Chưa có từ ngữ: trò chơi “Chọn từ đúng” sẽ dùng câu hỏi khác.');
     var fill = [];
     lines('fill').forEach(function (ln, i) {
       var parts = ln.split('|').map(function (x) { return x.trim(); });
@@ -5369,13 +5910,65 @@ button.chip:active { transform: scale(.96); }
       if (opts.indexOf(ans) === -1) { issues.push('Câu điền từ dòng ' + (i + 1) + ': đáp án “' + ans + '” không nằm trong các lựa chọn.'); return; }
       fill.push({ text: parts[0], options: opts, answer: ans });
     });
-    if (!fill.length) issues.push('Cần ít nhất 1 câu điền từ.');
-    var kho = { vans: new Set(D.BASE_VANS.concat(D.vansUpTo(g.id))), extra: new Set(S.state.classInfo.extraWords) };
-    phrases.concat(sentences, fill.map(function (f) { return f.text.replace('___', f.answer); })).forEach(function (t) {
-      var out = VV.viet.checkText(t, kho).outside;
-      if (out.length) warns.push('“' + t + '” có tiếng chưa học tới nhóm ' + g.id + ': ' + out.join(', ') + '.');
-    });
+    if (!g.hidden && g.id) {
+      var kho = D.khoAt(g.id, S.state.classInfo.extraWords);
+      phrases.concat(sentences, fill.map(function (f) { return f.text.replace('___', f.answer); })).forEach(function (t) {
+        var out = VV.viet.checkText(t, kho).outside;
+        if (out.length) warns.push('“' + t + '” có tiếng chưa học tới nhóm ' + g.id + ': ' + out.join(', ') + '.');
+      });
+    }
     return { issues: issues, warns: warns, data: { words: words, phrases: phrases, sentences: sentences, fill: fill } };
+  }
+
+  // Thêm nhóm vần riêng (ví dụ vần sách lớp đang dùng có mà danh sách gợi ý chưa có).
+  function addGroupDialog() {
+    ui.openDialog('<form><h2 id="dialog-title" class="dialog-title">Thêm nhóm vần</h2>' +
+      '<p class="muted">Mỗi dòng một vần: viết vần, dấu hai chấm, rồi các tiếng có vần đó. Từ ngữ và câu thêm sau ở ô sửa nhóm.</p>' +
+      '<div class="field"><label for="ng-lines">Vần và tiếng</label><textarea id="ng-lines" name="lines" rows="4" class="reading" spellcheck="false" placeholder="oong: boong, xoong…"></textarea></div>' +
+      '<div id="ng-issues"></div>' +
+      '<div class="dialog-actions"><button type="button" class="btn" data-global="close-dialog">Hủy</button><button type="submit" class="btn btn-primary">Thêm nhóm</button></div></form>',
+      {
+        onMount: function (dlg) {
+          dlg.querySelector('form').onsubmit = function (e) {
+            e.preventDefault();
+            var issues = [], words = {}, vans = [];
+            var existing = [];
+            D.allGroups().forEach(function (g) { existing = existing.concat(g.vans); });
+            e.target.lines.value.split('\n').map(function (x) { return x.trim(); }).filter(Boolean).forEach(function (ln) {
+              var parts = ln.split(':');
+              var v = (parts[0] || '').trim().toLowerCase();
+              var list = (parts[1] || '').split(',').map(function (x) { return x.trim().toLowerCase(); }).filter(Boolean);
+              if (!v || D.isConsonantUnit(v)) { issues.push('“' + ln + '”: cần bắt đầu bằng một vần, ví dụ “oong: boong, xoong”.'); return; }
+              if (existing.indexOf(v) !== -1 || vans.indexOf(v) !== -1) { issues.push('Vần ' + v + ' đã có trong danh sách.'); return; }
+              if (list.length < 2) { issues.push('Vần ' + v + ' cần ít nhất 2 tiếng.'); return; }
+              list.forEach(function (w) { var p = VV.viet.parse(w); if (!p || p.van !== v) issues.push('“' + w + '” không có vần ' + v + '.'); });
+              vans.push(v); words[v] = list.slice(0, 8);
+            });
+            if (!vans.length && !issues.length) issues.push('Nhập ít nhất một dòng.');
+            if (issues.length) {
+              dlg.querySelector('#ng-issues').innerHTML = '<div class="kho-summary is-warn" role="alert">' + ui.icon('alert') + '<ul>' + issues.map(function (x) { return '<li>' + ui.esc(x) + '</li>'; }).join('') + '</ul></div>';
+              return;
+            }
+            var key = 'tu-' + Date.now().toString(36);
+            S.updateCurriculum(function (cur) { cur.custom.push({ key: key, vans: vans, words: words, phrases: [], sentences: [], fill: [] }); });
+            editKey = key;
+            ui.closeDialog();
+            ui.toast('Đã thêm nhóm ' + vans.join(', ') + ' vào cuối danh sách. Dùng mũi tên để đưa nhóm về đúng chỗ.');
+            VV.app.refresh();
+          };
+        }
+      });
+  }
+
+  function moveGroup(key, dir) {
+    var order = D.allGroups().map(function (g) { return g.key; });
+    var i = order.indexOf(key), j = i + dir;
+    if (i < 0 || j < 0 || j >= order.length) return;
+    order[i] = order[j]; order[j] = key;
+    S.updateCurriculum(function (cur) { cur.order = order; });
+    VV.app.refresh();
+    var btn = document.querySelector('[data-act="' + (dir < 0 ? 'grp-up' : 'grp-down') + '"][data-key="' + key + '"]');
+    if (btn && !btn.disabled) btn.focus();
   }
 
   function voiceSection() {
@@ -5468,11 +6061,39 @@ button.chip:active { transform: scale(.96); }
         ui.toast('Đã xóa địa chỉ. Thẻ in sẽ không kèm mã QR.'); VV.app.refresh();
       },
       'reset-group': function () {
-        ui.confirmDialog({ title: 'Khôi phục nội dung gốc nhóm ' + editGroup + '?', body: 'Các tiếng, từ, câu bạn đã sửa của nhóm này sẽ trở về bản có sẵn.' }, 'Khôi phục', true).then(function (ok) {
+        var g = findGroup(editKey);
+        ui.confirmDialog({ title: 'Khôi phục nội dung gốc nhóm ' + g.title + '?', body: 'Các tiếng, từ, câu bạn đã sửa của nhóm này sẽ trở về bản có sẵn.' }, 'Khôi phục', true).then(function (ok) {
           if (!ok) return;
-          S.commit(function (s) { delete s.curriculum[editGroup]; });
-          D.applyOverrides(S.state.curriculum);
-          ui.toast('Đã khôi phục nội dung gốc nhóm ' + editGroup + '.'); VV.app.refresh();
+          S.updateCurriculum(function (cur) { delete cur.edits[editKey]; });
+          ui.toast('Đã khôi phục nội dung gốc nhóm ' + g.title + '.'); VV.app.refresh();
+        });
+      },
+      'grp-up': function (el) { moveGroup(el.getAttribute('data-key'), -1); },
+      'grp-down': function (el) { moveGroup(el.getAttribute('data-key'), 1); },
+      'grp-edit': function (el) {
+        editKey = el.getAttribute('data-key');
+        VV.app.refresh();
+        var f = document.querySelector('form[data-form="content"]');
+        if (f) { f.scrollIntoView({ block: 'start' }); var first = f.querySelector('textarea'); if (first) first.focus({ preventScroll: true }); }
+      },
+      'grp-add': function () { addGroupDialog(); },
+      'grp-reset-order': function () {
+        ui.confirmDialog({ title: 'Trở về thứ tự gợi ý?', body: 'Mọi nhóm sẽ được dùng lại theo thứ tự có sẵn. Nội dung đã sửa và nhóm tự thêm vẫn giữ nguyên.' }, 'Trở về thứ tự gợi ý').then(function (ok) {
+          if (!ok) return;
+          S.updateCurriculum(function (cur) { cur.order = null; cur.hidden = []; });
+          ui.toast('Đã trở về thứ tự gợi ý.'); VV.app.refresh();
+        });
+      },
+      'grp-delete': function () {
+        var g = findGroup(editKey);
+        ui.confirmDialog({ title: 'Xóa nhóm ' + g.title + '?', body: 'Nhóm tự thêm này sẽ bị xóa khỏi danh sách. Kết quả đọc đã ghi vẫn còn trong nhật ký.' }, 'Xóa nhóm', true).then(function (ok) {
+          if (!ok) return;
+          S.updateCurriculum(function (cur) {
+            cur.custom = cur.custom.filter(function (c) { return c.key !== editKey; });
+            if (cur.order) cur.order = cur.order.filter(function (k) { return k !== editKey; });
+          });
+          editKey = null;
+          ui.toast('Đã xóa nhóm.'); VV.app.refresh();
         });
       },
       'clear-key': function () {
@@ -5546,7 +6167,25 @@ button.chip:active { transform: scale(.96); }
     },
     onchange: function (e) {
       var t = e.target;
-      if (t.name === 'group' && t.closest('form[data-form="content"]')) { editGroup = Number(t.value); VV.app.refresh(); return; }
+      if (t.name === 'groupKey') { editKey = t.value; VV.app.refresh(); return; }
+      if (t.hasAttribute('data-grp-use')) {
+        var key = t.getAttribute('data-grp-use');
+        if (!t.checked && D.GROUPS.length <= 1) { t.checked = true; ui.toast('Cần dùng ít nhất một nhóm.', 'error'); return; }
+        S.updateCurriculum(function (cur) {
+          cur.hidden = cur.hidden.filter(function (k) { return k !== key; });
+          if (!t.checked) cur.hidden.push(key);
+        });
+        ui.toast(t.checked ? 'Đã dùng lại nhóm.' : 'Đã ẩn nhóm. Bài học, trò chơi và bản đồ sẽ bỏ qua nhóm này.');
+        VV.app.refresh();
+        var again = document.querySelector('[data-grp-use="' + key + '"]');
+        if (again) again.focus();
+        return;
+      }
+      if (t.name === 'tone-style') {
+        S.updateCurriculum(function (cur) { cur.toneStyle = t.value; });
+        ui.toast('Đã đổi cách đặt dấu.');
+        return;
+      }
       if (t.name === 'provider') {
         var s = S.settings.ai;
         s.provider = t.value;
@@ -5603,7 +6242,7 @@ button.chip:active { transform: scale(.96); }
         ui.toast(u ? 'Đã lưu địa chỉ. Thẻ in sẽ có mã QR.' : 'Đã xóa địa chỉ.'); VV.app.refresh();
       }
       if (kind === 'content') {
-        var g = D.GROUPS[editGroup - 1];
+        var g = findGroup(editKey);
         var r = readContent(f, g);
         var box = document.getElementById('nd-issues');
         if (r.issues.length) {
@@ -5611,9 +6250,12 @@ button.chip:active { transform: scale(.96); }
           return;
         }
         var save = function () {
-          S.commit(function (s) { s.curriculum[g.id] = r.data; });
-          D.applyOverrides(S.state.curriculum);
-          ui.toast('Đã lưu nội dung nhóm ' + g.id + '.'); VV.app.refresh();
+          S.updateCurriculum(function (cur) {
+            var custom = cur.custom.filter(function (c) { return c.key === g.key; })[0];
+            if (custom) { custom.words = r.data.words; custom.phrases = r.data.phrases; custom.sentences = r.data.sentences; custom.fill = r.data.fill; }
+            else cur.edits[g.key] = r.data;
+          });
+          ui.toast('Đã lưu nhóm ' + g.title + '.'); VV.app.refresh();
         };
         if (r.warns.length) {
           ui.confirmDialog({ title: 'Có tiếng chưa học', body: r.warns.join(' ') + ' Vẫn lưu?' }, 'Vẫn lưu').then(function (ok) { if (ok) save(); });
@@ -5651,7 +6293,7 @@ button.chip:active { transform: scale(.96); }
       '<p class="lede">Vần vui AI không dạy thay giáo viên. Học liệu số, AI hỗ trợ soạn bài và đánh giá của giáo viên đi cùng nhau trong một chu trình.</p></div></header>' +
 
       '<section class="panel"><h2 class="panel-title">Bắt đầu nhanh</h2><ol class="steps">' +
-      '<li><b>Tạo lớp.</b> Vào Cài đặt, nhập tên lớp, chọn nhóm vần lớp đã học tới, thêm mã học sinh (HS01, HS02…).' + (st.isDemo ? ' Đang dùng dữ liệu mẫu: bấm Bắt đầu lớp mới ở mục Dữ liệu khi sẵn sàng.' : '') + ' <a href="#/cai-dat/lop">Mở Cài đặt lớp</a></li>' +
+      '<li><b>Tạo lớp.</b> Vào Cài đặt, nhập tên lớp, chọn nhóm lớp đang học, thêm mã học sinh (HS01, HS02…).' + (st.isDemo ? ' Đang dùng dữ liệu mẫu: bấm Bắt đầu lớp mới ở mục Dữ liệu khi sẵn sàng.' : '') + ' <a href="#/cai-dat/lop">Mở Cài đặt lớp</a></li>' +
       '<li><b>Đo đầu vào.</b> Dùng bài đo đọc dạng A hoặc phiếu đọc nhanh; giáo viên nghe từng em đọc và ghi đúng, sai. <a href="#/danh-gia/ab">Mở bài đo A/B</a></li>' +
       '<li><b>Xem bản đồ âm vần.</b> Mỗi em có gợi ý vần cần luyện kèm lý do. Giao bài, hoặc đổi bài nếu giáo viên thấy cần. <a href="#/ban-do">Mở bản đồ</a></li>' +
       '<li><b>Soạn và duyệt học liệu.</b> Nhập API key nếu muốn AI soạn nháp; luôn kiểm tra kho tiếng và đáp án trước khi duyệt. <a href="#/tro-ly">Mở trợ lý soạn bài</a></li>' +
@@ -5688,7 +6330,7 @@ button.chip:active { transform: scale(.96); }
       faq('Vì sao nút nghe không phát âm?', 'Máy chưa có giọng đọc tiếng Việt. Cài giọng tiếng Việt cho hệ điều hành rồi mở lại trang; trong lúc đó giáo viên đọc mẫu trực tiếp.') +
       faq('Mã QR trên thẻ hoạt động thế nào?', 'Đăng file lên một địa chỉ web, nhập địa chỉ ở Cài đặt, mục Mã QR. Thẻ in ra có mã; điện thoại quét sẽ mở thẻ để nghe đọc, ghép tiếng và viết.') +
       faq('AI có chấm phát âm, chữ viết không?', 'Không. Giáo viên nghe đọc và chấm bài viết theo tiêu chí. Kết quả trò chơi chỉ phản ánh khả năng nhận diện.') +
-      faq('Sửa tiếng, câu cho đúng bộ sách của trường ở đâu?', 'Cài đặt, mục Nội dung bài học. Mỗi tiếng phải đúng vần của dòng đó; câu có tiếng chưa học sẽ được cảnh báo.') +
+      faq('Làm sao cho khớp bộ sách của trường?', 'Cài đặt, mục Nội dung bài học: ẩn nhóm lớp không học, đổi thứ tự bằng mũi tên, thêm nhóm vần còn thiếu, sửa tiếng, từ, câu của từng nhóm. Kết quả đã ghi không mất khi ẩn hay đổi thứ tự.') +
       '</section></div></section>';
   }
 

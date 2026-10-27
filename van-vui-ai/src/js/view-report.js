@@ -37,7 +37,13 @@
   // Biểu đồ cặp cột ngang: đầu vào và đầu ra theo nhóm vần.
   function prePostChart(studentId) {
     var progress = S.state.classInfo.progress;
-    var rows = D.GROUPS.slice(0, progress).map(function (g) {
+    // Chỉ vẽ các nhóm đã có số liệu đầu vào hoặc đầu ra.
+    var withData = D.GROUPS.slice(0, progress).filter(function (g) { var pp = S.groupPrePost(g.id, studentId); return pp.pre.total || pp.post.total; });
+    if (!withData.length) {
+      return '<figure class="chart"><figcaption class="chart-head"><span class="chart-title">Tỉ lệ đọc đúng theo nhóm</span></figcaption>' +
+        '<p class="muted">Chưa có kết quả ghi thời điểm đầu vào hoặc đầu ra. Dùng phiếu đọc nhanh hoặc bài đo A/B và chọn thời điểm.</p></figure>';
+    }
+    var rows = withData.map(function (g) {
       var pp = S.groupPrePost(g.id, studentId);
       function bar(cls, r, label) {
         if (!r.total) return '<div class="pp-bar is-none"><span class="pp-val">' + label + ': chưa đo</span></div>';
@@ -48,7 +54,7 @@
       return '<div class="pp-row"><span class="pp-label">Nhóm ' + g.id + ' <span class="reading">' + ui.esc(g.title) + '</span></span>' +
         '<div class="pp-bars">' + bar('is-pre', pp.pre, 'Đầu vào') + bar('is-post', pp.post, 'Đầu ra') + '</div></div>';
     }).join('');
-    return '<figure class="chart"><figcaption class="chart-head"><span class="chart-title">Tỉ lệ đọc đúng theo nhóm vần</span>' +
+    return '<figure class="chart"><figcaption class="chart-head"><span class="chart-title">Tỉ lệ đọc đúng theo nhóm</span>' +
       '<span class="legend-inline"><span class="key is-pre"></span>Đầu vào<span class="key is-post"></span>Đầu ra</span></figcaption>' +
       '<div class="pp-chart">' + rows + '</div>' +
       '<p class="chart-note">Tính từ phiếu đọc nhanh và bài đo A/B có ghi thời điểm đầu vào hoặc đầu ra. Rê chuột hoặc chạm vào cột để xem số tiếng.</p></figure>';

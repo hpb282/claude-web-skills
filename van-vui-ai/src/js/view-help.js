@@ -16,7 +16,7 @@
       '<p class="lede">Vần vui AI không dạy thay giáo viên. Học liệu số, AI hỗ trợ soạn bài và đánh giá của giáo viên đi cùng nhau trong một chu trình.</p></div></header>' +
 
       '<section class="panel"><h2 class="panel-title">Bắt đầu nhanh</h2><ol class="steps">' +
-      '<li><b>Tạo lớp.</b> Vào Cài đặt, nhập tên lớp, chọn nhóm vần lớp đã học tới, thêm mã học sinh (HS01, HS02…).' + (st.isDemo ? ' Đang dùng dữ liệu mẫu: bấm Bắt đầu lớp mới ở mục Dữ liệu khi sẵn sàng.' : '') + ' <a href="#/cai-dat/lop">Mở Cài đặt lớp</a></li>' +
+      '<li><b>Tạo lớp.</b> Vào Cài đặt, nhập tên lớp, chọn nhóm lớp đang học, thêm mã học sinh (HS01, HS02…).' + (st.isDemo ? ' Đang dùng dữ liệu mẫu: bấm Bắt đầu lớp mới ở mục Dữ liệu khi sẵn sàng.' : '') + ' <a href="#/cai-dat/lop">Mở Cài đặt lớp</a></li>' +
       '<li><b>Đo đầu vào.</b> Dùng bài đo đọc dạng A hoặc phiếu đọc nhanh; giáo viên nghe từng em đọc và ghi đúng, sai. <a href="#/danh-gia/ab">Mở bài đo A/B</a></li>' +
       '<li><b>Xem bản đồ âm vần.</b> Mỗi em có gợi ý vần cần luyện kèm lý do. Giao bài, hoặc đổi bài nếu giáo viên thấy cần. <a href="#/ban-do">Mở bản đồ</a></li>' +
       '<li><b>Soạn và duyệt học liệu.</b> Nhập API key nếu muốn AI soạn nháp; luôn kiểm tra kho tiếng và đáp án trước khi duyệt. <a href="#/tro-ly">Mở trợ lý soạn bài</a></li>' +
@@ -53,7 +53,7 @@
       faq('Vì sao nút nghe không phát âm?', 'Máy chưa có giọng đọc tiếng Việt. Cài giọng tiếng Việt cho hệ điều hành rồi mở lại trang; trong lúc đó giáo viên đọc mẫu trực tiếp.') +
       faq('Mã QR trên thẻ hoạt động thế nào?', 'Đăng file lên một địa chỉ web, nhập địa chỉ ở Cài đặt, mục Mã QR. Thẻ in ra có mã; điện thoại quét sẽ mở thẻ để nghe đọc, ghép tiếng và viết.') +
       faq('AI có chấm phát âm, chữ viết không?', 'Không. Giáo viên nghe đọc và chấm bài viết theo tiêu chí. Kết quả trò chơi chỉ phản ánh khả năng nhận diện.') +
-      faq('Sửa tiếng, câu cho đúng bộ sách của trường ở đâu?', 'Cài đặt, mục Nội dung bài học. Mỗi tiếng phải đúng vần của dòng đó; câu có tiếng chưa học sẽ được cảnh báo.') +
+      faq('Làm sao cho khớp bộ sách của trường?', 'Cài đặt, mục Nội dung bài học: ẩn nhóm lớp không học, đổi thứ tự bằng mũi tên, thêm nhóm vần còn thiếu, sửa tiếng, từ, câu của từng nhóm. Kết quả đã ghi không mất khi ẩn hay đổi thứ tự.') +
       '</section></div></section>';
   }
 

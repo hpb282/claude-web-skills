@@ -37,7 +37,8 @@
       library: [],
       effort: [],
       homework: [],
-      curriculum: {}
+      contentVersion: 2,
+      curriculum: { edits: {}, order: null, hidden: [], custom: [], toneStyle: 'moi' }
     };
   }
 
@@ -48,11 +49,61 @@
     };
   }
 
-  function load() {
-    var raw = safeGet(KEY);
-    if (raw) {
-      try { state = JSON.parse(raw); } catch (e) { state = null; }
+  // ---------- Lưu trữ: IndexedDB (dung lượng lớn, đủ cho cả năm học), dự phòng localStorage ----------
+  var DB_NAME = 'vanvui', DB_STORE = 'kv';
+  var dbPromise = null;
+  function db() {
+    if (!dbPromise) {
+      dbPromise = new Promise(function (resolve, reject) {
+        if (!window.indexedDB) { reject(new Error('no idb')); return; }
+        var timer = setTimeout(function () { reject(new Error('idb timeout')); }, 2000);
+        var req;
+        try { req = window.indexedDB.open(DB_NAME, 1); } catch (e) { clearTimeout(timer); reject(e); return; }
+        req.onupgradeneeded = function () { req.result.createObjectStore(DB_STORE); };
+        req.onsuccess = function () { clearTimeout(timer); resolve(req.result); };
+        req.onerror = function () { clearTimeout(timer); reject(req.error); };
+        req.onblocked = function () { clearTimeout(timer); reject(new Error('idb blocked')); };
+      });
     }
+    return dbPromise;
+  }
+  function idbGet(k) {
+    return db().then(function (d) {
+      return new Promise(function (resolve, reject) {
+        var r = d.transaction(DB_STORE, 'readonly').objectStore(DB_STORE).get(k);
+        r.onsuccess = function () { resolve(r.result); };
+        r.onerror = function () { reject(r.error); };
+      });
+    });
+  }
+  function idbPut(k, v) {
+    return db().then(function (d) {
+      return new Promise(function (resolve, reject) {
+        var tx = d.transaction(DB_STORE, 'readwrite');
+        tx.objectStore(DB_STORE).put(v, k);
+        tx.oncomplete = function () { resolve(true); };
+        tx.onerror = function () { reject(tx.error); };
+        tx.onabort = function () { reject(tx.error); };
+      });
+    });
+  }
+
+  // Dữ liệu trong localStorage chỉ còn khi là bản cũ hoặc khi IndexedDB không dùng được: ưu tiên bản đó.
+  function readRaw() {
+    var legacy = safeGet(KEY);
+    if (legacy) return Promise.resolve(legacy);
+    return idbGet(KEY).catch(function () { return null; });
+  }
+
+  function load() {
+    return readRaw().then(function (raw) {
+      if (raw) {
+        try { state = JSON.parse(raw); } catch (e) { state = null; }
+      }
+      finishLoad();
+    });
+  }
+  function finishLoad() {
     if (!state || state.version !== 1) state = buildDemo();
     migrate(state);
     var s = safeGet(SETTINGS_KEY);
@@ -70,15 +121,67 @@
   // Bổ sung trường mới cho dữ liệu đã lưu từ bản trước.
   function migrate(s) {
     var base = emptyState();
+    var oldKey = null;
+    if (!s.contentVersion) {
+      // Bản đầu chỉ có 10 nhóm vần đánh số 1-10: đổi sang khóa ổn định của danh sách đầy đủ.
+      var old = s.curriculum || {}, edits = {};
+      Object.keys(old).forEach(function (id) { var k = D.LEGACY_KEYS[Number(id) - 1]; if (k) edits[k] = old[id]; });
+      s.curriculum = { edits: edits, order: null, hidden: [], custom: [], toneStyle: 'moi' };
+      oldKey = D.LEGACY_KEYS[(s.classInfo && s.classInfo.progress || 1) - 1] || D.LEGACY_KEYS[0];
+      s.contentVersion = 2;
+    }
     Object.keys(base).forEach(function (k) { if (s[k] === undefined) s[k] = base[k]; });
     Object.keys(base.classInfo).forEach(function (k) { if (s.classInfo[k] === undefined) s.classInfo[k] = base.classInfo[k]; });
-    D.applyOverrides(s.curriculum);
+    Object.keys(base.curriculum).forEach(function (k) { if (s.curriculum[k] === undefined) s.curriculum[k] = base.curriculum[k]; });
+    D.applyCurriculum(s.curriculum);
+    VV.viet.setToneStyle(s.curriculum.toneStyle);
+    if (oldKey) s.classInfo.progress = positionOf(oldKey);
+    s.classInfo.progress = Math.max(1, Math.min(D.GROUPS.length, s.classInfo.progress || 1));
+  }
+  function positionOf(key) {
+    for (var i = 0; i < D.GROUPS.length; i++) if (D.GROUPS[i].key === key) return D.GROUPS[i].id;
+    return 1;
+  }
+
+  // Sửa danh sách nhóm (ẩn, đổi thứ tự, thêm nhóm…) mà vẫn giữ đúng nhóm lớp đang học.
+  function updateCurriculum(mutator) {
+    var cur = D.GROUPS[state.classInfo.progress - 1];
+    var curKey = cur && cur.key;
+    var curIndex = D.allGroups().indexOf(cur);
+    mutator(state.curriculum);
+    D.applyCurriculum(state.curriculum);
+    VV.viet.setToneStyle(state.curriculum.toneStyle);
+    var pos = 0;
+    D.GROUPS.forEach(function (g) { if (g.key === curKey) pos = g.id; });
+    if (!pos) {
+      // Nhóm đang học vừa bị ẩn: lùi về nhóm đang dùng gần nhất phía trước.
+      var all = D.allGroups();
+      for (var i = Math.min(curIndex, all.length - 1); i >= 0 && !pos; i--) if (!all[i].hidden) pos = all[i].id;
+    }
+    state.classInfo.progress = pos || 1;
+    save();
+    listeners.forEach(function (fn) { fn(); });
   }
 
   var saveFailed = false;
+  var lastSize = 0;
+  var writeChain = Promise.resolve();
+  var warned = false;
   function save() {
-    saveFailed = !safeSet(KEY, JSON.stringify(state));
+    var json = JSON.stringify(state);
+    lastSize = json.length * 2;
     safeSet(SETTINGS_KEY, JSON.stringify(settings));
+    // Ghi tuần tự để bản mới nhất luôn là bản cuối cùng được lưu.
+    writeChain = writeChain.then(function () {
+      return idbPut(KEY, json).then(function () {
+        saveFailed = false;
+        safeRemove(KEY);
+      }, function () {
+        saveFailed = !safeSet(KEY, json);
+        if (saveFailed && !warned && VV.ui) { warned = true; VV.ui.toast('Không lưu được dữ liệu: bộ nhớ trình duyệt đã đầy hoặc bị chặn. Xuất bản sao lưu ở Cài đặt, mục Dữ liệu.', 'error'); }
+      });
+    });
+    return writeChain;
   }
 
   function commit(mutator) {
@@ -110,9 +213,7 @@
   }
 
   function kho() {
-    var vans = new Set(D.BASE_VANS.concat(D.vansUpTo(state.classInfo.progress)));
-    var extra = new Set((state.classInfo.extraWords || []).map(function (w) { return w.toLowerCase(); }));
-    return { vans: vans, extra: extra };
+    return D.khoAt(state.classInfo.progress, state.classInfo.extraWords);
   }
 
   function byDateDesc(a, b) { return b.date - a.date; }
@@ -167,13 +268,15 @@
       var g = D.GROUPS[state.classInfo.progress - 1] || D.GROUPS[0];
       return {
         van: g.vans[0], level: 'ho-tro', measured: 0, cell: map[g.vans[0]],
-        reason: 'Chưa có đủ kết quả đọc. Bắt đầu với vần ' + g.vans[0] + ' của bài đang học và ghi phiếu đọc nhanh để hệ thống có căn cứ.'
+        reason: 'Chưa có đủ kết quả đọc. Bắt đầu với ' + D.unitLabel(g.vans[0]) + ' của bài đang học và ghi phiếu đọc nhanh để hệ thống có căn cứ.'
       };
     }
     measured.sort(function (a, b) {
       var ra = map[a].read.correct / map[a].read.total;
       var rb = map[b].read.correct / map[b].read.total;
       if (ra !== rb) return ra - rb;
+      // Cùng tỉ lệ: ưu tiên âm, vần có nhiều lần đo hơn (kết quả đáng tin hơn).
+      if (map[a].read.total !== map[b].read.total) return map[b].read.total - map[a].read.total;
       if (map[a].read.correct !== map[b].read.correct) return map[a].read.correct - map[b].read.correct;
       return learned.indexOf(a) - learned.indexOf(b);
     });
@@ -184,12 +287,12 @@
       var next = D.GROUPS[Math.min(state.classInfo.progress, D.GROUPS.length) - 1];
       return {
         van: next.vans[0], level: 'van-dung', measured: measured.length, cell: map[next.vans[0]],
-        reason: 'Các vần đã đo đều đạt từ 5/6 tiếng đúng. Gợi ý luyện vận dụng với bài đang học.'
+        reason: 'Các âm, vần đã đo đều đạt từ 5/6 tiếng đúng. Gợi ý luyện vận dụng với bài đang học.'
       };
     }
     var topErr = Object.keys(cell.errors).sort(function (a, b) { return cell.errors[b] - cell.errors[a]; })[0];
-    var reason = 'Hồ sơ ghi ' + cell.read.correct + '/' + cell.read.total + ' tiếng đúng ở vần ' + best +
-      ', thấp nhất trong ' + measured.length + ' vần đã đo.';
+    var reason = 'Hồ sơ ghi ' + cell.read.correct + '/' + cell.read.total + ' tiếng đúng ở ' + D.unitLabel(best) +
+      ', thấp nhất trong ' + measured.length + ' âm, vần đã đo.';
     if (topErr) reason += ' Lỗi gặp nhiều nhất: ' + D.label(D.READ_ERRORS, topErr).toLowerCase() + ' (' + cell.errors[topErr] + ' lần).';
     return { van: best, level: levelFor(ratio), measured: measured.length, cell: cell, reason: reason, topError: topErr };
   }
@@ -262,27 +365,36 @@
   }
 
   // Bài đo A/B: 2 tiếng mỗi vần ở các nhóm đã học, chọn 20 tiếng. Dạng A lấy tiếng chẵn, dạng B lấy tiếng lẻ.
+  // Bài đo A/B: 20 tiếng rải đều các âm, vần đã học (đã sang giai đoạn vần thì chỉ đo vần).
+  // Dạng A và B lấy tiếng khác nhau của cùng các đơn vị. Trả về [{ tieng, van }].
   function abForm(form, progress) {
-    var vans = D.vansUpTo(progress);
-    var pick = [];
-    var offset = form === 'A' ? 0 : 1;
-    var round = 0;
-    while (pick.length < 20 && round < 3) {
-      for (var i = 0; i < vans.length && pick.length < 20; i++) {
-        var g = D.groupOfVan(vans[i]);
-        var list = g.words[vans[i]];
-        var w = list[(offset + round * 2) % list.length];
-        if (pick.indexOf(w) === -1) pick.push(w);
-      }
-      round++;
+    var units = D.vansUpTo(progress);
+    var vanUnits = units.filter(function (u) { var g = D.groupOfVan(u); return g && g.kind === 'van'; });
+    if (vanUnits.length) units = vanUnits;
+    if (units.length > 20) {
+      var spaced = [];
+      for (var s = 0; s < 20; s++) spaced.push(units[Math.floor(s * units.length / 20)]);
+      units = spaced;
     }
-    return pick.slice(0, 20);
+    var pick = [], used = [];
+    var offset = form === 'A' ? 0 : 1;
+    for (var round = 0; round < 6 && pick.length < 20; round++) {
+      for (var i = 0; i < units.length && pick.length < 20; i++) {
+        var list = D.groupOfVan(units[i]).words[units[i]];
+        var w = list[(offset + round * 2) % list.length];
+        if (used.indexOf(w) === -1) { used.push(w); pick.push({ tieng: w, van: units[i] }); }
+      }
+    }
+    return pick;
   }
 
   function buildDemo() {
     var s = emptyState();
     s.isDemo = true;
-    s.classInfo = { name: 'Lớp 1A (mẫu)', progress: 6, extraWords: ['lan', 'na'] };
+    var posOf = function (key) { var p = 1; D.GROUPS.forEach(function (g) { if (g.key === key) p = g.id; }); return p; };
+    var demoProgress = posOf('v-oi');
+    var vanStart = posOf('v-an');
+    s.classInfo = { name: 'Lớp 1A (mẫu)', progress: demoProgress, extraWords: ['lan', 'na'], siteUrl: '' };
     var R = rng(20261026);
     var now = Date.now();
     var weak = {
@@ -313,13 +425,16 @@
         return { ok: ok, err: err };
       }
 
-      // Phiếu đọc nhanh đầu vào: nhóm 1-4, 6 tiếng mỗi vần, 4 tuần trước.
-      D.GROUPS.slice(0, 6).forEach(function (g) {
-        var phase = g.id <= 4 ? 'dau-vao' : 'thuong-xuyen';
-        var date = now - (g.id <= 4 ? 27 : 12 + g.id) * DAY + idx * 600000;
+      // Phiếu đọc nhanh: phần âm (đã vững) từ đầu năm; 4 nhóm vần đầu là đầu vào, các nhóm sau là thường xuyên.
+      D.GROUPS.slice(0, demoProgress).forEach(function (g) {
+        var isAm = g.kind === 'am';
+        var vanIdx = g.id - vanStart;
+        var phase = isAm || vanIdx < 4 ? 'dau-vao' : 'thuong-xuyen';
+        var date = now - (isAm ? 45 - g.id : vanIdx < 4 ? 27 : 20 - vanIdx) * DAY + idx * 600000;
         g.vans.forEach(function (v) {
-          g.words[v].forEach(function (w) {
-            var r = readTieng(v, phase, date, 'phieu', 0);
+          g.words[v].slice(0, isAm ? 3 : 6).forEach(function (w) {
+            var r = isAm ? { ok: R() < 0.97, err: 'thanh' } : readTieng(v, phase, date, 'phieu', 0);
+            if (r.ok) r.err = null;
             s.records.push({ id: uid('r'), studentId: stu.id, date: date, phase: phase, skill: 'doc', source: 'phieu',
               van: v, tieng: w, correct: r.ok, error: r.err, support: r.ok ? 'tu-doc' : 'co-ho-tro' });
           });
@@ -327,7 +442,7 @@
       });
 
       // Trò chơi nhận diện: vài lượt gần đây.
-      D.vansUpTo(6).forEach(function (v) {
+      D.vansUpTo(demoProgress).filter(function (v) { return D.groupOfVan(v).kind === 'van'; }).forEach(function (v) {
         var n = 3 + Math.floor(R() * 3);
         for (var k = 0; k < n; k++) {
           var gp = prof.vans.indexOf(v) !== -1 ? 0.6 : 0.92;
@@ -342,10 +457,9 @@
         var phase = form === 'A' ? 'dau-vao' : 'dau-ra';
         var date = now - (form === 'A' ? 28 : 1) * DAY + idx * 900000;
         var testId = uid('t');
-        var items = abForm(form, 4).map(function (w) {
-          var p = VV.viet.parse(w);
-          var r = readTieng(p.van, phase, date, 'bai-do', form === 'B' ? 0.18 : 0);
-          return { tieng: w, van: p.van, correct: r.ok, error: r.err };
+        var items = abForm(form, posOf('v-am')).map(function (it) {
+          var r = readTieng(it.van, phase, date, 'bai-do', form === 'B' ? 0.18 : 0);
+          return { tieng: it.tieng, van: it.van, correct: r.ok, error: r.err };
         });
         var score = items.filter(function (i) { return i.correct; }).length;
         s.tests.push({ id: testId, studentId: stu.id, date: date, phase: phase, form: form, items: items, score: score, total: 20 });
@@ -456,13 +570,10 @@
     commit(function (s) { var base = emptyState(); Object.keys(base).forEach(function (k) { s[k] = obj[k] !== undefined ? obj[k] : base[k]; }); migrate(s); });
   }
 
-  function storageSize() {
-    var raw = safeGet(KEY) || '';
-    return raw.length * 2;
-  }
+  function storageSize() { return lastSize; }
 
   VV.store = {
-    load: load, save: save, commit: commit, onChange: onChange, uid: uid,
+    load: load, save: save, whenSaved: function () { return writeChain; }, commit: commit, onChange: onChange, uid: uid,
     get state() { return state; },
     get settings() { return settings; },
     get saveFailed() { return saveFailed; },
@@ -471,7 +582,7 @@
     vanMap: vanMap, cellStatus: cellStatus, suggest: suggest, levelFor: levelFor, assignment: assignment,
     latestTest: latestTest, groupPrePost: groupPrePost, errorCounts: errorCounts,
     writingScore: writingScore, latestWriting: latestWriting, effortMinutes: effortMinutes,
-    abForm: abForm, resetToEmpty: resetToEmpty, resetToDemo: resetToDemo, importState: importState,
+    abForm: abForm, updateCurriculum: updateCurriculum, positionOf: positionOf, resetToEmpty: resetToEmpty, resetToDemo: resetToDemo, importState: importState,
     storageSize: storageSize, rng: rng, DAY: DAY
   };
 })(window.VV = window.VV || {});

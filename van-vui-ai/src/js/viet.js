@@ -41,17 +41,22 @@
     }
     var rest = base.slice(initial.length);
 
-    // "gi": gì = gi + i; gìn = gi + in; gia = gi + a.
+    // "gi": gì = gi + i; gìn = gi + in; gia = gi + a; giếng = gi + iêng (chữ i được lược bớt).
     if (initial === 'gi') {
-      if (rest === '' || !isVowel(rest[0])) rest = 'i' + rest;
+      if (rest === '' || !isVowel(rest[0]) || rest[0] === 'ê') rest = 'i' + rest;
     }
     // Không bắt đầu bằng nguyên âm: không phải tiếng (ví dụ "ng").
     if (!rest || !isVowel(rest[0])) return null;
     return { initial: initial, van: rest, tone: tone, base: base, word: String(word).toLowerCase() };
   }
 
+  // Cách đặt dấu với oa, oe, uy không có âm cuối: 'moi' (hoà, khoẻ, thuỷ) hoặc 'cu' (hòa, khỏe, thủy).
+  var toneStyle = 'moi';
+  function setToneStyle(s) { toneStyle = s === 'cu' ? 'cu' : 'moi'; }
+
   // Chọn nguyên âm mang dấu thanh trong vần (quy tắc đơn giản, đủ cho vần lớp 1).
   function toneIndex(van) {
+    if (toneStyle === 'moi' && (van === 'oa' || van === 'oe' || van === 'uy')) return 1;
     var uo = van.indexOf('ươ');
     if (uo !== -1) return uo + 1;
     for (var i = 0; i < van.length; i++) if (MARKED_VOWELS.indexOf(van[i]) !== -1) return i;
@@ -98,7 +103,7 @@
       var p = parse(lower);
       t.parsed = p;
       if (kho.extra && kho.extra.has(lower)) { t.ok = true; return; }
-      t.ok = !!(p && kho.vans.has(p.van));
+      t.ok = !!(p && kho.vans.has(p.van) && (!kho.initials || !p.initial || kho.initials.has(p.initial)));
       if (!t.ok && outside.indexOf(lower) === -1) outside.push(lower);
     });
     return { tokens: tokens, outside: outside };
@@ -134,6 +139,7 @@
 
   VV.viet = {
     isStopVan: isStopVan,
+    setToneStyle: setToneStyle,
     validTones: validTones,
     toneDistractors: toneDistractors,
     parse: parse,

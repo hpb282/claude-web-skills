@@ -103,7 +103,9 @@
   }
 
   function init() {
-    VV.store.load();
+    VV.store.load().then(start, function () { start(); });
+  }
+  function start() {
     main = document.getElementById('main');
     ['click'].forEach(function (t) { main.addEventListener(t, function (e) { dispatch('click', e); }); });
     main.addEventListener('change', function (e) { dispatch('change', e); });

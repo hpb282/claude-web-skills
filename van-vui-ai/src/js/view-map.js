@@ -3,7 +3,7 @@
   'use strict';
   var ui = VV.ui, D = VV.data, S = VV.store;
 
-  var view = { selected: null, compare: false, second: null };
+  var view = { selected: null, compare: false, second: null, openStages: {} };
 
   var STATUS_LABEL = { 'can-luyen': 'Cần luyện', 'dang-len': 'Đang lên', 'vung': 'Vững', 'chua-do': 'Chưa đo' };
 
@@ -19,7 +19,7 @@
   function tile(cell, learned) {
     var status = S.cellStatus(cell);
     var score = cell.read.total ? cell.read.correct + '/' + cell.read.total : '–';
-    var aria = 'Vần ' + cell.van + ': ' + (cell.read.total ? cell.read.correct + ' trên ' + cell.read.total + ' tiếng đọc đúng' : 'chưa đo') + (learned ? '' : ', chưa học');
+    var aria = D.unitLabel(cell.van).replace(/^./, function (c) { return c.toUpperCase(); }) + ': ' + (cell.read.total ? cell.read.correct + ' trên ' + cell.read.total + ' tiếng đọc đúng' : 'chưa đo') + (learned ? '' : ', chưa học');
     var game = cell.game.total ? '<span class="van-game">chọn đúng ' + cell.game.correct + '/' + cell.game.total + '</span>' : '';
     return '<button type="button" class="van-tile is-' + status + (learned ? '' : ' is-future') + '" data-act="detail" data-van="' + ui.esc(cell.van) + '" aria-label="' + ui.esc(aria) + '">' +
       '<span class="van-glyph">' + ui.esc(cell.van) + '</span>' +
@@ -31,15 +31,33 @@
     var progress = S.state.classInfo.progress;
     var sug = S.suggest(studentId);
     var asg = S.assignment(studentId);
-    var groups = D.GROUPS.map(function (g) {
-      var learned = g.id <= progress;
-      return '<div class="map-row' + (learned ? '' : ' is-future') + '">' +
-        '<span class="map-row-label">Nhóm ' + g.id + (learned ? '' : '<small>chưa học</small>') + '</span>' +
-        '<div class="map-tiles">' + g.vans.map(function (v) { return tile(map[v], learned); }).join('') + '</div></div>';
+    // Chỉ hiện nhóm đã học, gom theo giai đoạn. Giai đoạn đã vững hết thì thu gọn.
+    function row(g) {
+      return '<div class="map-row">' +
+        '<span class="map-row-label">Nhóm ' + g.id + '</span>' +
+        '<div class="map-tiles">' + g.vans.map(function (v) { return tile(map[v], true); }).join('') + '</div></div>';
+    }
+    var groups = D.STAGES.map(function (st) {
+      var gs = D.GROUPS.filter(function (g) { return g.stage === st.id && g.id <= progress; });
+      if (!gs.length) return '';
+      var units = [];
+      gs.forEach(function (g) { units = units.concat(g.vans); });
+      var count = { 'can-luyen': 0, 'dang-len': 0, 'vung': 0, 'chua-do': 0 };
+      units.forEach(function (u) { count[S.cellStatus(map[u])]++; });
+      var hasCurrent = gs[gs.length - 1].id === progress;
+      var open = hasCurrent || count['can-luyen'] > 0 || view.openStages[st.id];
+      var summary = units.length + ' ' + (st.id === 'am' ? 'âm' : 'vần') +
+        (count['can-luyen'] ? ', ' + count['can-luyen'] + ' cần luyện' : '') +
+        (count['dang-len'] ? ', ' + count['dang-len'] + ' đang lên' : '') +
+        (count.vung ? ', ' + count.vung + ' vững' : '') + (count['chua-do'] ? ', ' + count['chua-do'] + ' chưa đo' : '');
+      return '<details class="map-stage" data-stage="' + st.id + '"' + (open ? ' open' : '') + '><summary><span class="map-stage-name">' + ui.esc(st.label) + '</span>' +
+        '<span class="map-stage-sum">' + summary + '</span></summary>' + gs.map(row).join('') + '</details>';
     }).join('');
+    var left = D.GROUPS.length - progress;
+    if (left > 0) groups += '<p class="sheet-note">Còn ' + left + ' nhóm lớp chưa học. Đổi bài đang học ở trang Bài học số.</p>';
 
     var asgHTML = asg
-      ? '<p class="assigned">' + ui.icon('check') + '<span>Đang giao: vần <b class="glyph-inline">' + ui.esc(asg.van) + '</b>, mức ' +
+      ? '<p class="assigned">' + ui.icon('check') + '<span>Đang giao: ' + D.unitWord(asg.van) + ' <b class="glyph-inline">' + ui.esc(asg.van) + '</b>, mức ' +
         ui.esc(D.label(D.LEVELS, asg.level).toLowerCase()) + ' (' + (asg.source === 'goi-y' ? 'theo gợi ý' : 'giáo viên chọn') + ', ' + ui.fmtShort(asg.date) + ').</span>' +
         '<button type="button" class="btn btn-sm btn-ghost" data-act="unassign" data-student="' + studentId + '">Bỏ giao</button></p>'
       : '<p class="assigned is-none">Chưa giao bài cho em này.</p>';
@@ -104,7 +122,7 @@
 
     root.innerHTML = '<section class="page">' +
       '<header class="page-head"><div><h1>Bản đồ âm vần</h1>' +
-      '<p class="lede">' + ui.esc(st.classInfo.name) + ' đã học tới nhóm ' + g.id + ' (' + ui.esc(g.title) + '). Chọn một em để xem vần cần luyện và bài gợi ý.</p></div>' +
+      '<p class="lede">' + ui.esc(st.classInfo.name) + ' đang học nhóm ' + g.id + ' (' + ui.esc(g.title) + '). Chọn một em để xem âm, vần cần luyện và bài gợi ý.</p></div>' +
       '<label class="switch"><input type="checkbox" data-role="compare"' + (view.compare ? ' checked' : '') + '><span>So sánh hai hồ sơ</span></label></header>' +
       (st.isDemo ? '<div class="banner">Đây là dữ liệu mẫu của 8 học sinh giả lập để xem thử. <a href="#/cai-dat/du-lieu">Xóa dữ liệu mẫu</a> khi bắt đầu dùng với lớp của bạn.</div>' : '') +
       (view.compare
@@ -122,7 +140,7 @@
     var games = recs.filter(function (r) { return r.skill === 'nhan-dien'; });
     var g = D.groupOfVan(van);
     ui.openDialog(
-      '<h2 id="dialog-title" class="dialog-title">Vần <span class="glyph-inline">' + ui.esc(van) + '</span> của ' + ui.esc(S.studentLabel(sid)) + '</h2>' +
+      '<h2 id="dialog-title" class="dialog-title">' + (D.unitWord(van) === 'âm' ? 'Âm' : 'Vần') + ' <span class="glyph-inline">' + ui.esc(van) + '</span> của ' + ui.esc(S.studentLabel(sid)) + '</h2>' +
       (reads.length
         ? '<div class="table-wrap"><table class="table"><thead><tr><th scope="col">Ngày</th><th scope="col">Tiếng</th><th scope="col">Kết quả</th><th scope="col">Lỗi</th></tr></thead><tbody>' +
           reads.map(function (r) {
@@ -159,8 +177,10 @@
     var cur = S.assignment(studentId) || S.suggest(studentId);
     ui.openDialog(
       '<form data-form="change"><h2 id="dialog-title" class="dialog-title">Đổi bài cho ' + ui.esc(S.studentLabel(studentId)) + '</h2>' +
-      '<div class="field"><label for="chg-van">Vần cần luyện</label><select id="chg-van" name="van">' +
-      learned.map(function (v) { return '<option' + (v === cur.van ? ' selected' : '') + '>' + ui.esc(v) + '</option>'; }).join('') + '</select></div>' +
+      '<div class="field"><label for="chg-van">Âm, vần cần luyện</label><select id="chg-van" name="van">' +
+      D.GROUPS.filter(function (g) { return g.id <= S.state.classInfo.progress; }).map(function (g) {
+        return '<optgroup label="Nhóm ' + g.id + '">' + g.vans.map(function (v) { return '<option value="' + ui.esc(v) + '"' + (v === cur.van ? ' selected' : '') + '>' + ui.esc(D.unitLabel(v)) + '</option>'; }).join('') + '</optgroup>';
+      }).join('') + '</select></div>' +
       '<fieldset class="field"><legend>Mức độ</legend>' + ui.segmented('chg-level', D.LEVELS, cur.level, 'Mức độ') + '</fieldset>' +
       '<div class="field"><label for="chg-note">Ghi chú của giáo viên <span class="optional">(không bắt buộc)</span></label><input id="chg-note" name="note" autocomplete="off" placeholder="Ví dụ: em đọc nhầm an và ang…"></div>' +
       '<div class="dialog-actions"><button type="button" class="btn" data-global="close-dialog">Hủy</button><button type="submit" class="btn btn-primary">Giao bài</button></div></form>',
@@ -222,6 +242,12 @@
       VV.studentMode.open({ preview: true, van: el.getAttribute('data-van'), level: el.getAttribute('data-level') });
     }
   };
+  // Nhớ giai đoạn giáo viên đã mở trên bản đồ khi màn hình vẽ lại.
+  document.addEventListener('toggle', function (e) {
+    var d = e.target;
+    if (d && d.classList && d.classList.contains('map-stage')) view.openStages[d.getAttribute('data-stage')] = d.open;
+  }, true);
+
   view.onchange = function (e) {
     var t = e.target;
     if (t.name === 'stuA') { view.selected = t.value; history.replaceState(null, '', '#/ban-do/' + t.value); VV.app.refresh(); }

@@ -831,3 +831,63 @@ button.chip:active { transform: scale(.96); }
 @media print {
   .print-cards .card-qr .qr { width: 24mm; height: 24mm; }
 }
+
+/* ---------- Bổ sung: chương trình đầy đủ ---------- */
+.map-stage { border-radius: var(--r-tile); }
+.map-stage + .map-stage { margin-top: 4px; }
+.map-stage > summary {
+  list-style: none; cursor: pointer; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px;
+  background: var(--surface); border-radius: var(--r-btn); padding: 10px 14px; min-height: 44px;
+  box-shadow: inset 0 0 0 1px var(--line); transition: box-shadow .15s ease;
+}
+.map-stage > summary::-webkit-details-marker { display: none; }
+.map-stage > summary::before { content: ""; width: 8px; height: 8px; border-right: 2px solid var(--ink-2); border-bottom: 2px solid var(--ink-2); transform: rotate(-45deg); align-self: center; margin-right: 4px; transition: transform .15s ease; }
+.map-stage[open] > summary::before { transform: rotate(45deg); }
+.map-stage > summary:hover { box-shadow: inset 0 0 0 1px var(--ink-3); }
+.map-stage-name { font-weight: 700; }
+.map-stage-sum { font-size: 13px; color: var(--ink-2); }
+.map-stage[open] > summary { margin-bottom: 10px; }
+.map-stage .map-row + .map-row { margin-top: 10px; }
+.lesson-stage { display: grid; gap: 12px; }
+.stage-title { font-size: 19px; font-weight: 700; display: flex; align-items: baseline; gap: 10px; }
+.lesson-grid { grid-template-columns: repeat(auto-fill, minmax(min(100%, 170px), 1fr)); }
+.lesson-card { min-height: 128px; }
+.lesson-vans { font-size: 28px; }
+.group-list-wrap > summary { font-size: 15px; }
+.group-list { list-style: none; display: grid; max-height: 520px; overflow-y: auto; border: 1px solid var(--line); border-radius: var(--r-btn); margin: 8px 0 12px; overscroll-behavior: contain; }
+.group-item { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 8px 12px; align-items: center; padding: 4px 12px; border-top: 1px solid var(--line); }
+.group-item:first-child { border-top: 0; }
+.group-item .check { min-height: 40px; padding: 6px 0; font-size: 14px; }
+.group-item.is-hidden { background: var(--sunk); }
+.group-item.is-hidden .group-item-name { color: var(--ink-3); }
+.group-item-name { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 10px; min-width: 0; }
+.group-item-num { font-size: 13px; font-weight: 600; color: var(--ink-2); min-width: 64px; font-variant-numeric: tabular-nums; }
+.group-item-name .reading { font-size: 18px; font-weight: 700; }
+.group-item-stage { font-size: 12px; color: var(--ink-3); }
+.group-item-actions { display: flex; gap: 2px; align-items: center; }
+.group-item-actions .btn-icon:disabled { opacity: .3; cursor: default; }
+.content-form { display: grid; gap: 14px; padding-top: 12px; border-top: 1px solid var(--line); }
+.tone-style { padding-top: 12px; border-top: 1px solid var(--line); }
+@media (max-width: 600px) {
+  .group-item { grid-template-columns: minmax(0, 1fr) auto; }
+  .group-item .check { grid-column: 1 / -1; }
+}
+.group-list-wrap > summary { font-size: 15px; }
+.group-list { list-style: none; display: grid; max-height: 520px; overflow-y: auto; border: 1px solid var(--line); border-radius: var(--r-btn); margin: 8px 0 12px; overscroll-behavior: contain; }
+.group-item { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 8px 12px; align-items: center; padding: 4px 12px; border-top: 1px solid var(--line); }
+.group-item:first-child { border-top: 0; }
+.group-item .check { min-height: 40px; padding: 6px 0; font-size: 14px; }
+.group-item.is-hidden { background: var(--sunk); }
+.group-item.is-hidden .group-item-name { color: var(--ink-3); }
+.group-item-name { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 10px; min-width: 0; }
+.group-item-num { font-size: 13px; font-weight: 600; color: var(--ink-2); min-width: 64px; font-variant-numeric: tabular-nums; }
+.group-item-name .reading { font-size: 18px; font-weight: 700; }
+.group-item-stage { font-size: 12px; color: var(--ink-3); }
+.group-item-actions { display: flex; gap: 2px; align-items: center; }
+.group-item-actions .btn-icon:disabled { opacity: .3; cursor: default; }
+.content-form { display: grid; gap: 14px; padding-top: 12px; border-top: 1px solid var(--line); }
+.tone-style { padding-top: 12px; border-top: 1px solid var(--line); }
+@media (max-width: 600px) {
+  .group-item { grid-template-columns: minmax(0, 1fr) auto; }
+  .group-item .check { grid-column: 1 / -1; }
+}

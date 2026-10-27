@@ -7,7 +7,7 @@ Học liệu số hỗ trợ luyện đọc, viết cho học sinh lớp 1. Giá
 - **Dùng ngay:** mở file `dist/van-vui-ai.html` bằng Chrome, Edge, Safari hoặc Firefox. Không cần cài đặt, không cần máy chủ.
 - **Mã nguồn:** thư mục `src/`. Mở `src/index.html` cũng chạy được trực tiếp.
 - **Đóng gói lại thành một file:** `python3 tools/build.py` (tạo lại `dist/van-vui-ai.html`).
-- **Kiểm tra dữ liệu bài học:** `node tools/check-data.js` (mọi câu, từ trong 10 nhóm vần chỉ dùng vần đã học).
+- **Kiểm tra dữ liệu bài học:** `node tools/check-data.js` (47 nhóm âm, vần; mỗi câu, từ chỉ dùng âm, vần đã học tới nhóm đó).
 
 Lần đầu mở, app có sẵn dữ liệu mẫu của 8 học sinh giả lập để xem thử. Vào **Cài đặt, Dữ liệu, Bắt đầu lớp mới** để xóa dữ liệu mẫu và nhập lớp thật.
 
@@ -28,8 +28,8 @@ Vào **Cài đặt, Kết nối AI**:
 
 | Thành phần | Trong app |
 |---|---|
-| Bản đồ âm vần cá nhân (ưu tiên) | Lưới 10 nhóm vần trên nền giấy ô li, mỗi vần ghi số tiếng đọc đúng trong 6 lần gần nhất. Gợi ý vần cần luyện, mức độ và lý do. Giao bài, đổi bài, so sánh hai hồ sơ. |
-| 1. Bài học số | 10 nhóm vần: vần, tiếng (tô màu vần), thẻ vần biết nói, từ ngữ, câu, khung luyện viết ô li bằng tay hoặc bút cảm ứng. In thẻ vần và phiếu luyện viết. |
+| Bản đồ âm vần cá nhân (ưu tiên) | Lưới các nhóm đã học trên nền giấy ô li, gom theo giai đoạn (giai đoạn đã vững tự thu gọn); mỗi âm, vần ghi số tiếng đọc đúng trong 6 lần gần nhất. Gợi ý vần cần luyện, mức độ và lý do. Giao bài, đổi bài, so sánh hai hồ sơ. |
+| 1. Bài học số | 47 nhóm cả năm lớp 1 (phần âm và mọi vần), chia theo giai đoạn: âm hoặc vần, tiếng (tô màu phần cần chú ý), thẻ biết nói, từ ngữ, câu, khung luyện viết ô li bằng tay hoặc bút cảm ứng. In thẻ vần và phiếu luyện viết. |
 | 2. Trò chơi tương tác | Nhận diện vần, ghép tiếng, chọn từ đúng, hoàn thành câu. Góc luyện tập toàn màn hình cho học sinh, có đọc mẫu bằng giọng tiếng Việt của máy. |
 | 3. Trợ lý tạo học liệu AI | Bài tập theo 3 mức (có hỗ trợ, tự thực hiện, vận dụng), truyện đúng vần, gói "5 phút cùng con" (bản điện thoại và bản giấy), phiếu luyện viết. Mọi tiếng ngoài kho bị đánh dấu; giáo viên sửa, duyệt rồi mới lưu vào kho học liệu. |
 | 4. Công cụ đánh giá | Phiếu đọc nhanh (màn hình cho học sinh, phím tắt D/S cho giáo viên), bài đo đọc A/B 20 tiếng, chấm bài viết theo tiêu chí kèm ảnh, đọc hiểu, nhật ký lỗi xuất CSV. |
@@ -45,13 +45,30 @@ Vào **Cài đặt, Kết nối AI**:
 
 Mã QR chỉ mở được trên điện thoại khi file đã được đăng lên một địa chỉ web (GitHub Pages, Google Sites, máy chủ của trường…). Vào **Cài đặt → Mã QR**, dán địa chỉ, quét thử mã mẫu. Thẻ in ra từ trang Bài học sẽ có mã mở đúng thẻ đó. Mã QR được tạo ngay trong file, không cần mạng.
 
+## Chương trình
+
+Có sẵn **47 nhóm, 158 âm và vần** của lớp 1, chia 4 giai đoạn:
+
+| Giai đoạn | Nhóm |
+|---|---|
+| Âm và chữ ghi âm (10 nhóm) | a b c; e ê o ô; ơ d đ; i k h l; u ư ch kh; m n g gi; gh nh ng ngh; r s t tr; th ia ua ưa; ph qu v x |
+| Vần cơ bản (23 nhóm) | an ăn ân; on ôn ơn; en ên in un; am ăm âm; om ôm ơm; em êm im um; ai ay ây; oi ôi ơi; ui ưi; ao eo au âu; êu iu ưu; ac ăc âc; oc ôc uc ưc; at ăt ât; ot ôt ơt; et êt it ut ưt; ap ăp âp; op ôp ơp; ep êp ip up; anh ênh inh; ach êch ich; ang ăng âng; ong ông ung ưng |
+| Vần có iê, uô, ươ (7 nhóm) | iên yên iêt; iêng iêc iêm iêp; iêu yêu; uôn uông uôt uôc; uôi uôm; ươn ương ươt ươc; ươi ươu ươm ươp |
+| Vần có âm đệm (7 nhóm) | oa oe; oan oăn oat oăt; oai oay; oang oăng oanh oach; uê uy uơ; uân uât uynh uych; uyên uyêt |
+
+Thứ tự là gợi ý theo tiến độ phổ biến, chưa bám riêng bộ sách nào. Trong giai đoạn học âm, kho tiếng kiểm tra cả âm đầu: tiếng có chữ chưa học sẽ bị đánh dấu.
+
 ## Sửa nội dung cho đúng bộ sách
 
-**Cài đặt → Nội dung bài học**: sửa tiếng (4 đến 8 tiếng mỗi vần), từ ngữ, câu và câu điền từ của từng nhóm. Tiếng sai vần sẽ bị chặn; câu có tiếng chưa học được cảnh báo. Có nút khôi phục nội dung gốc.
+**Cài đặt → Nội dung bài học**:
+
+- **Danh sách nhóm:** bỏ chọn "Dùng" để ẩn nhóm lớp không học, dùng mũi tên để đổi thứ tự, "Thêm nhóm vần" cho vần sách có mà danh sách chưa có (ví dụ `oong: boong, xoong`). Kết quả đã ghi không mất khi ẩn hay đổi thứ tự.
+- **Sửa nhóm:** tiếng (2 đến 8 tiếng mỗi âm, vần), từ ngữ, câu, câu điền từ. Tiếng sai âm, vần bị chặn; câu có tiếng chưa học được cảnh báo. Có nút khôi phục nội dung gốc.
+- **Cách đặt dấu với oa, oe, uy:** kiểu mới (hoà, khoẻ, thuỷ) hoặc kiểu cũ (hòa, khỏe, thủy), chọn theo sách lớp đang dùng.
 
 ## Dữ liệu
 
-- Lưu trong trình duyệt của máy đang dùng (localStorage). Dùng **Xuất bản sao lưu** định kỳ; nhập lại trên máy khác bằng **Nhập bản sao lưu**.
+- Lưu trong trình duyệt của máy đang dùng (IndexedDB, đủ cho dữ liệu cả năm học của một lớp; trình duyệt không hỗ trợ thì tự dùng localStorage). Dùng **Xuất bản sao lưu** định kỳ; nhập lại trên máy khác bằng **Nhập bản sao lưu**.
 - Học sinh được ghi bằng mã (HS01, HS02…), không cần họ tên.
 - Ảnh bài viết được thu nhỏ trước khi lưu.
 
@@ -67,7 +84,7 @@ src/
   css/app.css         giao diện, in ấn
   js/viet.js          tách tiếng thành âm đầu + vần + thanh, ghép tiếng, kiểm tra kho tiếng
   js/qr.js            tạo mã QR không cần thư viện ngoài
-  js/data.js          10 nhóm vần, tiếng, từ, câu
+  js/data.js          47 nhóm âm, vần (tiếng, từ, câu); thứ tự, ẩn, thêm nhóm
   js/store.js         lưu trữ, dữ liệu mẫu, bản đồ âm vần, gợi ý
   js/ai.js            gọi Claude / OpenAI / Gemini, soạn từ mẫu
   js/ui.js            hàm giao diện dùng chung

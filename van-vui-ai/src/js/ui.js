@@ -38,6 +38,8 @@
     camera: '<path d="M3 7h4l2-3h6l2 3h4v13H3z"/><circle cx="12" cy="13" r="4"/>',
     alert: '<path d="M12 3 2 21h20z"/><path d="M12 10v4"/><path d="M12 17.5v.01"/>',
     home: '<path d="M3 11 12 3l9 8"/><path d="M5 10v10h14V10"/>',
+    arrowUp: '<path d="M12 19V5"/><path d="m5 12 7-7 7 7"/>',
+    arrowDown: '<path d="M12 5v14"/><path d="m19 12-7 7-7-7"/>',
     help: '<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6v.6"/><path d="M12 17v.01"/>',
     qr: '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3z"/><path d="M20 14v.01"/><path d="M14 20h.01"/><path d="M17 20h4v-3"/>'
   };
@@ -138,20 +140,40 @@
   }
 
   // ---------- Chữ: tô vần, kiểm tra kho ----------
+  // Tô màu phần cần chú ý trong tiếng: âm đầu (với bài âm) hoặc vần (với bài vần).
   function vanWord(word, van) {
-    var parts = VV.viet.splitForHighlight(word);
     var p = VV.viet.parse(word);
-    if (!p || (van && p.van !== van)) return esc(word);
+    if (!p) return esc(word);
+    if (van && VV.data.isConsonantUnit(van)) {
+      if (p.initial !== van) return esc(word);
+      return '<span class="hl-van">' + esc(word.slice(0, van.length)) + '</span>' + esc(word.slice(van.length));
+    }
+    if (van && p.van !== van) return esc(word);
+    var parts = VV.viet.splitForHighlight(word);
     return esc(parts[0]) + '<span class="hl-van">' + esc(parts[1]) + '</span>';
   }
-  // Tô các tiếng mang vần trong danh sách vans.
+  // Tô các tiếng mang âm hoặc vần trong danh sách.
   function vanText(text, vans) {
     return VV.viet.tokenize(text).map(function (t) {
       if (!t.isWord) return esc(t.text);
-      var p = VV.viet.parse(t.text);
-      if (p && vans.indexOf(p.van) !== -1) return vanWord(t.text, p.van);
+      for (var i = 0; i < vans.length; i++) if (VV.data.matches(t.text, vans[i])) return vanWord(t.text, vans[i]);
       return esc(t.text);
     }).join('');
+  }
+
+  // Ô chọn nhóm, chia theo giai đoạn. maxId: chỉ hiện nhóm tới vị trí này (bỏ trống là tất cả).
+  function groupSelect(id, name, selected, maxId, label) {
+    var D = VV.data;
+    var progress = VV.store.state.classInfo.progress;
+    return '<select id="' + esc(id) + '" name="' + esc(name) + '"' + (label ? ' aria-label="' + esc(label) + '"' : '') + '>' +
+      D.STAGES.map(function (st) {
+        var gs = D.GROUPS.filter(function (g) { return g.stage === st.id && (!maxId || g.id <= maxId); });
+        if (!gs.length) return '';
+        return '<optgroup label="' + esc(st.label) + '">' + gs.map(function (g) {
+          return '<option value="' + g.id + '"' + (g.id === selected ? ' selected' : '') + '>Nhóm ' + g.id + ': ' + esc(g.title) +
+            (g.id === progress ? ' (đang học)' : g.id > progress ? ' (chưa học)' : '') + '</option>';
+        }).join('') + '</optgroup>';
+      }).join('') + '</select>';
   }
   // Đánh dấu tiếng ngoài kho.
   function khoText(text) {
@@ -274,7 +296,7 @@
   VV.ui = {
     esc: esc, icon: icon, toast: toast, openDialog: openDialog, closeDialog: closeDialog, confirmDialog: confirmDialog,
     speak: speak, speakBtn: speakBtn, canSpeak: canSpeak, viVoices: viVoices,
-    vanWord: vanWord, vanText: vanText, khoText: khoText,
+    vanWord: vanWord, vanText: vanText, khoText: khoText, groupSelect: groupSelect,
     fmtDate: fmtDate, fmtShort: fmtShort, pct: pct, dec: dec, download: download, csv: csv, printHTML: printHTML, copyText: copyText,
     readImage: readImage, reducedMotion: reducedMotion, segmented: segmented, studentOptions: studentOptions, emptyState: emptyState
   };

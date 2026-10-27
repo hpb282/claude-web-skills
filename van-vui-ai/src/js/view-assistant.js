@@ -17,7 +17,6 @@
   var busy = null; // { tool, controller }
   var tab = TABS[0];
 
-  function learnedVans() { return D.vansUpTo(S.state.classInfo.progress); }
   function currentGroup() { return D.GROUPS[S.state.classInfo.progress - 1]; }
 
   function formState(tool) {
@@ -25,21 +24,29 @@
       var g = currentGroup();
       forms[tool] = {
         vans: g.vans.slice(),
-        objective: 'Đọc đúng, viết đúng các tiếng có vần ' + g.vans.join(', ') + '; nhận ra vần trong tiếng, từ và câu.',
+        objective: defaultObjective(g.vans),
         errors: [], perLevel: 3, topic: D.TOPICS[0], sentences: 3, studentId: ''
       };
     }
     return forms[tool];
   }
 
+  function defaultObjective(vans) {
+    var labels = vans.map(D.unitLabel).join(', ');
+    return 'Đọc đúng, viết đúng các tiếng có ' + labels + '; nhận ra chúng trong tiếng, từ và câu.';
+  }
+
   // ---------- Biểu mẫu ----------
+  // Chọn nhóm trước, rồi chọn âm, vần trong nhóm đó (gọn hơn một dãy dài các nút).
   function vanChips(f) {
-    var learned = learnedVans();
-    return '<fieldset class="field"><legend>Vần trọng tâm</legend><div class="chip-check">' +
-      learned.map(function (v) {
+    var g = D.groupOfVan(f.vans[0]) || currentGroup();
+    return '<div class="field"><label for="f-group">Nhóm</label>' + ui.groupSelect('f-group', 'group', g.id) + '</div>' +
+      '<fieldset class="field"><legend>Âm, vần trọng tâm</legend><div class="chip-check">' +
+      g.vans.map(function (v) {
         var id = 'v-' + v;
         return '<input type="checkbox" id="' + id + '" name="vans" value="' + ui.esc(v) + '"' + (f.vans.indexOf(v) !== -1 ? ' checked' : '') + '><label for="' + id + '" class="reading">' + ui.esc(v) + '</label>';
-      }).join('') + '</div><p class="hint">Chỉ hiện vần đã học tới nhóm ' + S.state.classInfo.progress + '. Đổi tiến độ lớp trong Cài đặt.</p></fieldset>';
+      }).join('') + '</div>' +
+      (g.id > S.state.classInfo.progress ? '<p class="hint">Nhóm này lớp chưa học: bộ kiểm tra sẽ đánh dấu tiếng của nhóm là ngoài kho.</p>' : '') + '</fieldset>';
   }
   function errorChips(f, list, legend) {
     return '<fieldset class="field"><legend>' + legend + ' <span class="optional">(không bắt buộc)</span></legend><div class="chip-check">' +
@@ -446,6 +453,13 @@
     var el = e.target;
     var assistForm = el.closest('form[data-form="assist"]');
     if (assistForm) readForm(assistForm, tab.tool);
+    if (assistForm && el.name === 'group') {
+      var fg = formState(tab.tool), grp = D.GROUPS[Number(el.value) - 1];
+      fg.vans = grp.vans.slice();
+      fg.objective = defaultObjective(fg.vans);
+      VV.app.refresh();
+      return;
+    }
     if (el.hasAttribute('data-answer')) {
       var i = Number(el.getAttribute('data-answer'));
       var t = drafts[tab.tool].data.tasks[i];

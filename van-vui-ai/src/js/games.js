@@ -18,22 +18,38 @@
   }
   function uniq(arr) { return arr.filter(function (x, i) { return arr.indexOf(x) === i; }); }
 
-  // ---------- Sinh câu hỏi ----------
+  // ---------- Sinh câu hỏi (dùng được cho cả bài âm và bài vần) ----------
+  // Các âm, vần cùng nhóm và cùng loại (âm đầu với âm đầu, vần với vần).
   function siblings(van) {
     var g = D.groupOfVan(van);
-    return g.vans.filter(function (v) { return v !== van; });
+    var cons = D.isConsonantUnit(van);
+    return g.vans.filter(function (v) { return v !== van && D.isConsonantUnit(v) === cons; });
+  }
+  // Tiếng nhiễu: lấy từ các âm, vần khác trong nhóm nhưng không chứa âm, vần đang hỏi.
+  function decoys(van, n) {
+    var g = D.groupOfVan(van);
+    var pool = [];
+    g.vans.forEach(function (v) { if (v !== van) g.words[v].forEach(function (w) { if (!D.matches(w, van) && pool.indexOf(w) === -1) pool.push(w); }); });
+    if (pool.length < n) {
+      // Nhóm quá nhỏ: lấy thêm từ nhóm liền trước.
+      var prev = D.GROUPS[g.id - 2];
+      if (prev) prev.vans.forEach(function (v) { prev.words[v].forEach(function (w) { if (!D.matches(w, van) && pool.indexOf(w) === -1) pool.push(w); }); });
+    }
+    return shuffle(pool).slice(0, n);
+  }
+  // Phương án sai cho bài ghép tiếng: đổi dấu thanh (hợp luật), hoặc đổi sang vần gần giống.
+  function ghepDecoys(w, van) {
+    return V.toneDistractors(w, D.isConsonantUnit(van) ? [] : siblings(van));
   }
 
   function qNhanDien(van, level, used) {
     var g = D.groupOfVan(van);
     var words = g.words[van].filter(function (w) { return used.indexOf(w) === -1; });
     var w = pick(words.length ? words : g.words[van]);
-    var sib = siblings(van);
-    var n = level === 'ho-tro' ? 1 : 2;
-    var ds = shuffle(sib).slice(0, n).map(function (v) { return pick(g.words[v]); });
+    var ds = decoys(van, level === 'ho-tro' ? 1 : 2);
     return {
       type: 'nhan-dien', van: van, word: w,
-      prompt: 'Chọn tiếng có vần', focus: van, speakText: van,
+      prompt: 'Chọn tiếng có ' + D.unitWord(van), focus: van, speakText: van,
       options: shuffle([w].concat(ds)), answer: w, showVan: level === 'ho-tro'
     };
   }
@@ -43,32 +59,35 @@
     var words = g.words[van].filter(function (w) { return used.indexOf(w) === -1; });
     var w = pick(words.length ? words : g.words[van]);
     var p = V.parse(w);
-    var ds = V.toneDistractors(w, siblings(van)).slice(0, level === 'ho-tro' ? 1 : 2);
+    var ds = ghepDecoys(w, van).slice(0, level === 'ho-tro' ? 1 : 2);
+    if (!ds.length) return qNhanDien(van, level, used);
     return {
       type: 'ghep-tieng', van: van, word: w,
-      prompt: 'Ghép thành tiếng', parts: [p.initial || '', van, V.TONE_NAME[p.tone]], speakText: w,
+      prompt: 'Ghép thành tiếng', parts: [p.initial || '', p.van, V.TONE_NAME[p.tone]], speakText: w,
       options: shuffle([w].concat(ds)), answer: w, showVan: level === 'ho-tro'
     };
   }
 
   function qChonTu(van, level) {
     var g = D.groupOfVan(van);
-    var phrases = g.phrases.filter(function (ph) {
-      return ph.split(' ').some(function (x) { var q = V.parse(x); return q && q.van === van; });
-    });
-    if (!phrases.length) return qNhanDien(van, level, []);
+    var phrases = g.phrases.filter(function (ph) { return ph.split(' ').some(function (x) { return D.matches(x, van); }); });
+    var sibs = siblings(van);
+    if (!phrases.length || !sibs.length) return qNhanDien(van, level, []);
     var ph = pick(phrases);
     var parts = ph.split(' ');
     var idx = 0;
-    parts.forEach(function (x, i) { var q = V.parse(x); if (q && q.van === van) idx = i; });
+    parts.forEach(function (x, i) { if (D.matches(x, van)) idx = i; });
     var p = V.parse(parts[idx]);
-    var wrong = siblings(van).filter(function (v) { return V.validTones(v).indexOf(p.tone) !== -1; }).map(function (v) {
+    var cons = D.isConsonantUnit(van);
+    // Viết sai: thay âm đầu (bài âm) hoặc thay vần (bài vần) bằng âm, vần gần giống trong nhóm.
+    var wrong = sibs.filter(function (v) { return cons || V.validTones(v).indexOf(p.tone) !== -1; }).map(function (v) {
       var copy = parts.slice();
-      var w = V.compose(p.initial, v, p.tone);
+      var w = cons ? V.compose(v, p.van, p.tone) : V.compose(p.initial, v, p.tone);
       copy[idx] = parts[idx][0] === parts[idx][0].toUpperCase() ? w[0].toUpperCase() + w.slice(1) : w;
       return copy.join(' ');
     });
     var ds = uniq(wrong).filter(function (x) { return x !== ph; }).slice(0, level === 'ho-tro' ? 1 : 2);
+    if (!ds.length) return qNhanDien(van, level, []);
     return {
       type: 'chon-tu', van: van, word: parts[idx],
       prompt: 'Từ nào viết đúng?', speakText: ph,
@@ -78,11 +97,12 @@
 
   function qCau(van, level) {
     var g = D.groupOfVan(van);
-    var fills = g.fill.filter(function (f) { return V.parse(f.answer).van === van; });
+    if (!g.fill.length) return qNhanDien(van, level, []);
+    var fills = g.fill.filter(function (f) { return D.matches(f.answer, van); });
     var f = pick(fills.length ? fills : g.fill);
     var opts = level === 'ho-tro' ? [f.answer, f.options.filter(function (o) { return o !== f.answer; })[0]] : f.options;
     return {
-      type: 'hoan-thanh-cau', van: V.parse(f.answer).van, word: f.answer,
+      type: 'hoan-thanh-cau', van: D.unitOf(g, f.answer) || van, word: f.answer,
       prompt: 'Chọn tiếng điền vào chỗ trống', sentence: f.text, speakText: f.text.replace('___', f.answer),
       options: shuffle(opts), answer: f.answer, showVan: level === 'ho-tro'
     };
@@ -166,18 +186,18 @@
     var card = sm && sm.step === 'card' ? sm.card : null;
     sm = null;
     // Mở từ mã QR: quay về bài học chứa thẻ thay vì mở lại thẻ.
-    if (card && VV.app.route === 'the') { location.hash = '#/bai-hoc/' + D.groupOfVan(card.van).id; return; }
+    if (card && VV.app.route === 'the') { location.hash = '#/bai-hoc/' + (D.groupOfVan(card.van) || D.GROUPS[0]).id; return; }
     VV.app.refresh();
   }
 
   // ---------- Thẻ vần biết nói (mở từ mã QR hoặc trang bài học) ----------
   function openCard(word) {
-    var p = V.parse(word);
-    var g = p && D.groupOfVan(p.van);
+    var found = D.findWord(word);
+    var g = found && found.group;
     if (!g) { ui.toast('Không tìm thấy thẻ cho “' + word + '”.', 'error'); return; }
     open({ noStudent: true });
     sm.step = 'card';
-    sm.card = { word: word, van: p.van };
+    sm.card = { word: String(word).toLowerCase(), van: found.unit };
     draw(true);
   }
   function drawCard() {
@@ -186,8 +206,9 @@
     var list = D.groupOfVan(c.van).words[c.van];
     var i = list.indexOf(c.word);
     return '<div class="sm-body sm-center">' +
-      '<h1 class="sm-title" id="sm-title">Thẻ vần ' + ui.esc(c.van) + '</h1>' +
-      '<p class="sm-parts reading">' + (p.initial ? '<span class="part">' + ui.esc(p.initial) + '</span><span class="plus">+</span>' : '') + '<span class="part part-van">' + ui.esc(c.van) + '</span></p>' +
+      '<h1 class="sm-title" id="sm-title">Thẻ ' + ui.esc(D.unitLabel(c.van)) + '</h1>' +
+      '<p class="sm-parts reading">' + (p.initial ? '<span class="part' + (D.isConsonantUnit(c.van) ? ' part-van' : '') + '">' + ui.esc(p.initial) + '</span><span class="plus">+</span>' : '') +
+      '<span class="part' + (D.isConsonantUnit(c.van) ? '' : ' part-van') + '">' + ui.esc(p.van) + '</span></p>' +
       '<ol class="card-steps">' +
       '<li class="card-step"><p class="card-step-label">Đọc tiếng</p><p class="reading card-word">' + ui.esc(flat) + '</p>' + ui.speakBtn(flat, 'Nghe “' + flat + '”', 'sm-speak') + '</li>' +
       (p.tone !== 'ngang'
@@ -198,7 +219,7 @@
       '<div class="btn-row sm-card-nav">' +
       (i > 0 ? '<button type="button" class="btn btn-lg" data-sm="card" data-word="' + ui.esc(list[i - 1]) + '">' + ui.icon('arrowLeft') + ui.esc(list[i - 1]) + '</button>' : '') +
       (i < list.length - 1 ? '<button type="button" class="btn btn-lg" data-sm="card" data-word="' + ui.esc(list[i + 1]) + '">' + ui.esc(list[i + 1]) + ui.icon('arrowRight') + '</button>' : '') +
-      '<button type="button" class="btn btn-primary btn-lg" data-sm="card-practice">' + ui.icon('play') + 'Luyện vần ' + ui.esc(c.van) + '</button>' +
+      '<button type="button" class="btn btn-primary btn-lg" data-sm="card-practice">' + ui.icon('play') + 'Luyện ' + ui.esc(D.unitLabel(c.van)) + '</button>' +
       '</div></div>';
   }
 
@@ -217,7 +238,7 @@
   }
 
   function topbar() {
-    var label = sm.step === 'card' ? 'Thẻ vần biết nói' : sm.cfg.preview ? 'Xem thử, không ghi kết quả' : (sm.studentId ? S.studentLabel(sm.studentId) : 'Chơi thử, không ghi kết quả');
+    var label = sm.step === 'card' ? 'Thẻ biết nói' : sm.cfg.preview ? 'Xem thử, không ghi kết quả' : (sm.studentId ? S.studentLabel(sm.studentId) : 'Chơi thử, không ghi kết quả');
     var prog = sm.step === 'play' ? '<div class="sm-progress" role="progressbar" aria-label="Tiến độ" aria-valuemin="0" aria-valuemax="' + sm.questions.length + '" aria-valuenow="' + sm.idx + '">' +
       sm.questions.map(function (q, i) {
         var r = sm.results[i];
@@ -244,7 +265,7 @@
     var srcText = { giao: 'Bài cô giao cho em', 'goi-y': 'Bài gợi ý cho em', chon: 'Bài luyện', 'xem-thu': 'Xem thử bài luyện' }[plan.source];
     return '<div class="sm-body sm-center">' +
       '<p class="sm-kicker">' + ui.esc(srcText) + '</p>' +
-      '<h1 class="sm-title" id="sm-title">Hôm nay em luyện vần</h1>' +
+      '<h1 class="sm-title" id="sm-title">Hôm nay em luyện ' + D.unitWord(plan.van) + '</h1>' +
       '<div class="sm-van-card"><span class="sm-van">' + ui.esc(plan.vans ? plan.vans.join(', ') : plan.van) + '</span>' +
       ui.speakBtn(plan.vans ? plan.vans.join(', ') : plan.van, 'Nghe vần', 'sm-speak') + '</div>' +
       '<p class="sm-examples">' + examples.map(function (w) { return '<span class="reading">' + ui.vanWord(w, plan.van) + '</span>'; }).join('') + '</p>' +
@@ -259,7 +280,8 @@
       else if (r && r.chosen === o) cls = ' is-wrong';
     }
     // Mức có hỗ trợ: tô vần ở mọi phương án để em so sánh, không chỉ tô đáp án đúng.
-    var content = q.showVan && q.type !== 'chon-tu' ? ui.vanWord(o, null) : ui.esc(o);
+    var hl = D.isConsonantUnit(q.van) ? ((V.parse(o) || {}).initial || null) : null;
+    var content = q.showVan && q.type !== 'chon-tu' ? ui.vanWord(o, hl) : ui.esc(o);
     if (q.type === 'chon-tu' && q.showVan) content = ui.vanText(o, [q.van].concat(siblings(q.van)));
     return '<button type="button" class="sm-option' + cls + '" data-sm="answer" data-value="' + ui.esc(o) + '"' + (sm.answered ? ' aria-disabled="true"' : '') + '>' +
       '<span class="reading">' + content + '</span></button>';
@@ -448,8 +470,8 @@
           '<span class="game-card-title">' + ui.esc(t.label) + '</span><span class="game-card-desc">' + ui.esc(t.desc) + '</span>' + gamePreview(t.id) + '</label>';
       }).join('') + '</div></fieldset>' +
       '<div class="form-grid">' +
-      '<div class="field"><label for="g-group">Nhóm vần</label><select id="g-group" name="group">' +
-      D.GROUPS.map(function (x) { return '<option value="' + x.id + '"' + (x.id === gv.group ? ' selected' : '') + '>Nhóm ' + x.id + ': ' + ui.esc(x.title) + (x.id > progress ? ' (chưa học)' : '') + '</option>'; }).join('') +
+      '<div class="field"><label for="g-group">Nhóm âm, vần</label><select id="g-group" name="group">' +
+      ui.groupSelect('g-group-sel', 'group', gv.group).replace(/^<select[^>]*>/, '').replace(/<\/select>$/, '') +
       '</select></div>' +
       '<div class="field"><label for="g-stu">Ghi kết quả cho</label><select id="g-stu" name="student">' + ui.studentOptions(gv.studentId, 'Không ghi (chơi thử, cả lớp)') + '</select></div>' +
       '</div>' +
@@ -490,8 +512,8 @@
   VV.views.the = {
     render: function (root, params) {
       var word = params[0] || '';
-      var p = V.parse(word);
-      var g = p && D.groupOfVan(p.van);
+      var found = D.findWord(word);
+      var g = found && found.group;
       VV.views['bai-hoc'].render(root, [String(g ? g.id : 1)]);
       if (g) setTimeout(function () { openCard(word); }, 0);
     },

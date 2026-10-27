@@ -173,11 +173,13 @@
   }
 
   // ---------- Lời nhắc ----------
-  function systemPrompt(allowedVans, extra) {
+  function systemPrompt(allowedVans, extra, initials) {
     return [
       'Bạn là trợ lý soạn học liệu luyện đọc, viết tiếng Việt cho học sinh lớp 1 (khoảng 6 tuổi). Bạn chỉ soạn bản nháp; giáo viên là người kiểm tra và quyết định cuối cùng.',
       'Quy tắc bắt buộc:',
-      '1. Chỉ dùng tiếng có vần nằm trong danh sách vần đã học: ' + allowedVans.join(', ') + '. Âm đầu nào cũng được. Tiếng có vần khác danh sách là lỗi (ví dụ "vườn" có vần ươn, "hoa" có vần oa).',
+      '1. Chỉ dùng tiếng có vần nằm trong danh sách vần đã học: ' + allowedVans.join(', ') + '. ' +
+        (initials ? 'Lớp đang học âm: chỉ dùng tiếng không có âm đầu hoặc có âm đầu trong danh sách: ' + initials.join(', ') + '.' : 'Âm đầu nào cũng được.') +
+        ' Tiếng có vần khác danh sách là lỗi (ví dụ "vườn" có vần ươn, "hoa" có vần oa).',
       extra && extra.length ? '2. Được dùng thêm các tiếng giáo viên đã duyệt: ' + extra.join(', ') + '.' : '2. Không có tiếng bổ sung.',
       '3. Câu ngắn từ 3 đến 7 tiếng, nội dung gần gũi, an toàn, tích cực với trẻ. Không dùng tên thật của học sinh. Không chép nguyên văn sách giáo khoa.',
       '4. Viết đúng chính tả và dấu thanh; viết thường, chỉ viết hoa đầu câu và tên riêng.',
@@ -196,7 +198,7 @@
 
   function exercisesPrompt(p) {
     return [
-      'Soạn bài tập luyện theo 3 mức độ cho nhóm vần: ' + p.vans.join(', ') + '.',
+      'Soạn bài tập luyện theo 3 mức độ cho: ' + p.vans.map(D.unitLabel).join(', ') + '.',
       'Yêu cầu cần đạt của bài: ' + (p.objective || '(không ghi)'),
       p.errors.length ? 'Lỗi học sinh hay gặp cần luyện: ' + p.errors.join(', ') + '.' : '',
       'Mỗi mức độ ' + p.perLevel + ' nhiệm vụ. Ba mức: "ho-tro" (có hỗ trợ: tô màu vần, ít lựa chọn, có nghe mẫu), "tu-lam" (tự thực hiện), "van-dung" (dùng tiếng trong từ, câu mới).',
@@ -209,7 +211,7 @@
 
   function storyPrompt(p) {
     return [
-      'Viết một truyện rất ngắn ' + p.sentences + ' câu để luyện đọc vần: ' + p.vans.join(', ') + '. Chủ đề: ' + p.topic + '.',
+      'Viết một truyện rất ngắn ' + p.sentences + ' câu để luyện đọc: ' + p.vans.map(D.unitLabel).join(', ') + '. Chủ đề: ' + p.topic + '.',
       'Dùng nhiều tiếng có vần cần luyện. Thêm 2 câu hỏi đọc hiểu ngắn kèm câu trả lời mẫu.',
       'Trả về JSON đúng mẫu:',
       '{"title":"Tên truyện","story":"Câu 1. Câu 2. Câu 3.","questions":[{"q":"Câu hỏi?","a":"Câu trả lời."}]}'
@@ -219,7 +221,7 @@
   function parentPrompt(p) {
     return [
       'Soạn gói "5 phút cùng con" để phụ huynh luyện cùng con ở nhà: 3 phút đọc có người lớn hỗ trợ, 2 phút viết một nhiệm vụ ngắn.',
-      'Vần cần luyện: ' + p.vans.join(', ') + '. Lỗi con hay gặp: ' + (p.errors.length ? p.errors.join(', ') : 'chưa ghi') + '.',
+      'Âm, vần cần luyện: ' + p.vans.map(D.unitLabel).join(', ') + '. Lỗi con hay gặp: ' + (p.errors.length ? p.errors.join(', ') : 'chưa ghi') + '.',
       'Hướng dẫn dễ hiểu cho phụ huynh không có chuyên môn, giọng nhẹ nhàng, không so sánh với bạn khác, không chấm điểm.',
       'Các tiếng, câu để con đọc và viết phải theo quy tắc kho tiếng. Lời hướng dẫn cho phụ huynh thì không bị giới hạn.',
       'Trả về JSON đúng mẫu:',
@@ -229,7 +231,7 @@
 
   function writingPrompt(p) {
     return [
-      'Soạn phiếu luyện viết vào vở ô li cho học sinh lớp 1. Vần trọng tâm: ' + p.vans.join(', ') + '.',
+      'Soạn phiếu luyện viết vào vở ô li cho học sinh lớp 1. Trọng tâm: ' + p.vans.map(D.unitLabel).join(', ') + '.',
       'Lỗi viết giáo viên đã ghi: ' + (p.errors.length ? p.errors.join(', ') : 'chưa ghi') + '.',
       'Gồm hướng dẫn ngắn cho học sinh (giáo viên đọc to), 5 tiếng hoặc từ để viết, và một lưu ý cho giáo viên khi chấm.',
       'Trả về JSON đúng mẫu:',
@@ -254,40 +256,44 @@
       var words = g.words[van];
       var w = words[(round * 2) % words.length];
       var parsed = VV.viet.parse(w);
-      var others = g.vans.filter(function (v) { return v !== van; });
-      var w1 = g.words[others[0]], w2 = g.words[others[1 % others.length]];
-      var d1 = w1[round % w1.length];
-      var d2 = w2[(round + 3) % w2.length];
+      var cons = D.isConsonantUnit(van);
+      var others = g.vans.filter(function (v) { return v !== van && D.isConsonantUnit(v) === cons; });
+      // Tiếng nhiễu không được chứa âm, vần đang hỏi.
+      var pool = [];
+      g.vans.forEach(function (v) { if (v !== van) g.words[v].forEach(function (x) { if (!D.matches(x, van) && pool.indexOf(x) === -1) pool.push(x); }); });
+      var d1 = pool[round % (pool.length || 1)] || 'bé', d2 = pool[(round + 3) % (pool.length || 1)] || 'bà';
+      if (d2 === d1) d2 = pool[(round + 1) % (pool.length || 1)] || 'bà';
+      var label = D.unitLabel(van);
 
       out['ho-tro'].push({
         level: 'ho-tro', type: 'nhan-dien', van: van,
-        prompt: 'Nghe cô đọc, chọn tiếng có vần ' + van + '.',
-        question: 'Tiếng nào có vần ' + van + '?',
+        prompt: 'Nghe cô đọc, chọn tiếng có ' + label + '.',
+        question: 'Tiếng nào có ' + label + '?',
         options: shuffle([w, d1, d2], R), answer: w,
-        teacherNote: 'Đọc mẫu vần ' + van + ' trước khi cho học sinh chọn.'
+        teacherNote: 'Đọc mẫu ' + label + ' trước khi cho học sinh chọn.'
       });
 
-      var dis = VV.viet.toneDistractors(w, others);
+      var dis = VV.viet.toneDistractors(w, cons ? [] : others);
       out['tu-lam'].push({
         level: 'tu-lam', type: 'ghep-tieng', van: van,
         prompt: 'Ghép âm, vần và dấu thanh thành tiếng.',
-        question: (parsed.initial || '(không có âm đầu)') + ' + ' + van + ' + ' + VV.viet.TONE_NAME[parsed.tone],
+        question: (parsed.initial || '(không có âm đầu)') + ' + ' + parsed.van + ' + ' + VV.viet.TONE_NAME[parsed.tone],
         options: shuffle([w].concat(dis), R),
         answer: w, teacherNote: 'Cho học sinh đọc to tiếng vừa ghép.'
       });
 
-      var fills = g.fill.filter(function (f) { return VV.viet.parse(f.answer).van === van; });
-      if (k % 2 === 0 || !fills.length) {
+      var fills = g.fill.filter(function (f) { return D.matches(f.answer, van); });
+      if ((k % 2 === 0 || !fills.length) && g.fill.length) {
         var f = fills[round % (fills.length || 1)] || g.fill[round % g.fill.length];
         out['van-dung'].push({
-          level: 'van-dung', type: 'hoan-thanh-cau', van: VV.viet.parse(f.answer).van,
+          level: 'van-dung', type: 'hoan-thanh-cau', van: D.unitOf(g, f.answer) || van,
           prompt: 'Chọn tiếng điền vào chỗ trống rồi đọc cả câu.',
           question: f.text, options: shuffle(f.options, R), answer: f.answer,
           teacherNote: 'Hỏi học sinh vì sao chọn tiếng đó.'
         });
       } else {
         var phrase = g.phrases.filter(function (ph) {
-          return ph.split(' ').some(function (x) { var q = VV.viet.parse(x); return q && q.van === van; });
+          return ph.split(' ').some(function (x) { return D.matches(x, van); });
         })[0] || w;
         out['van-dung'].push({
           level: 'van-dung', type: 'viet', van: van, prompt: 'Viết vào vở ô li.',
@@ -391,7 +397,7 @@
     var t = TOOLS[tool];
     if (!useAI) return Promise.resolve({ data: t.norm(t.template(params)), source: 'mau' });
     var k = VV.store.kho();
-    var sys = systemPrompt(Array.from(k.vans), Array.from(k.extra));
+    var sys = systemPrompt(Array.from(k.vans), Array.from(k.extra), k.initials ? Array.from(k.initials) : null);
     return complete(sys, t.prompt(params), { signal: signal, json: true, maxTokens: t.maxTokens })
       .then(function (text) { return { data: t.norm(extractJSON(text)), source: 'ai' }; });
   }

@@ -32,16 +32,18 @@
   function phieuSetupHTML() {
     var st = phieu.setup;
     if (!st.studentId) st.studentId = firstStudent();
-    if (!st.vans) st.vans = D.GROUPS[S.state.classInfo.progress - 1].vans.slice();
-    var learned = D.vansUpTo(Math.min(10, S.state.classInfo.progress + 1));
+    if (!st.group || !D.GROUPS[st.group - 1]) st.group = S.state.classInfo.progress;
+    var g = D.GROUPS[st.group - 1];
+    if (!st.vans || !st.vans.some(function (v) { return g.vans.indexOf(v) !== -1; })) st.vans = g.vans.slice();
     return '<form class="panel" data-form="phieu-setup">' +
-      '<p class="muted">Giáo viên nghe học sinh đọc từng tiếng và ghi kết quả. Mỗi vần 3 hoặc 6 tiếng. Kết quả cập nhật bản đồ âm vần ngay.</p>' +
-      '<div class="form-grid">' + studentField('ph-stu', st.studentId) + phaseField('ph-phase', st.phase) + '</div>' +
-      '<fieldset class="field"><legend>Vần cần đo</legend><div class="chip-check">' +
-      learned.map(function (v) {
+      '<p class="muted">Giáo viên nghe học sinh đọc từng tiếng và ghi kết quả. Mỗi âm, vần 3 hoặc 6 tiếng. Kết quả cập nhật bản đồ âm vần ngay.</p>' +
+      '<div class="form-grid">' + studentField('ph-stu', st.studentId) + phaseField('ph-phase', st.phase) +
+      '<div class="field"><label for="ph-group">Nhóm</label>' + ui.groupSelect('ph-group', 'group', st.group) + '</div></div>' +
+      '<fieldset class="field"><legend>Âm, vần cần đo</legend><div class="chip-check">' +
+      g.vans.map(function (v) {
         return '<input type="checkbox" id="ph-v-' + v + '" name="vans" value="' + ui.esc(v) + '"' + (st.vans.indexOf(v) !== -1 ? ' checked' : '') + '><label for="ph-v-' + v + '" class="reading">' + ui.esc(v) + '</label>';
       }).join('') + '</div></fieldset>' +
-      '<fieldset class="field"><legend>Số tiếng mỗi vần</legend>' + ui.segmented('ph-per', [{ id: '3', label: '3 tiếng' }, { id: '6', label: '6 tiếng' }], String(st.per), 'Số tiếng mỗi vần') + '</fieldset>' +
+      '<fieldset class="field"><legend>Số tiếng mỗi âm, vần</legend>' + ui.segmented('ph-per', [{ id: '3', label: '3 tiếng' }, { id: '6', label: '6 tiếng' }], String(st.per), 'Số tiếng mỗi âm, vần') + '</fieldset>' +
       '<div class="btn-row"><button type="submit" class="btn btn-primary">Bắt đầu ghi phiếu</button></div></form>';
   }
 
@@ -84,7 +86,7 @@
     st.vans = Array.prototype.map.call(form.querySelectorAll('input[name="vans"]:checked'), function (i) { return i.value; });
     st.per = Number(form.querySelector('input[name="ph-per"]:checked').value);
     if (!st.studentId) { ui.toast('Chọn học sinh.', 'error'); return; }
-    if (!st.vans.length) { ui.toast('Chọn ít nhất một vần.', 'error'); return; }
+    if (!st.vans.length) { ui.toast('Chọn ít nhất một âm hoặc vần.', 'error'); return; }
     var items = [];
     st.vans.forEach(function (v) {
       var g = D.groupOfVan(v);
@@ -125,17 +127,16 @@
   function abHTML() {
     if (!ab.studentId) ab.studentId = firstStudent();
     if (!ab.scope) ab.scope = S.state.classInfo.progress;
-    if (!ab.items) ab.items = S.abForm(ab.form, ab.scope).map(function (w) { return { tieng: w, van: V.parse(w).van, result: null, error: '' }; });
+    if (!ab.items) ab.items = S.abForm(ab.form, ab.scope).map(function (it) { return { tieng: it.tieng, van: it.van, result: null, error: '' }; });
     var score = ab.items.filter(function (x) { return x.result === true; }).length;
     var marked = ab.items.filter(function (x) { return x.result !== null; }).length;
     var tests = S.state.tests.slice().sort(function (a, b) { return b.date - a.date; });
     return '<form class="panel" data-form="ab">' +
-      '<p class="muted">Hai dạng A và B tương đương: cùng số tiếng mỗi vần, khác tiếng. Dùng A cho đầu vào, B cho đầu ra để so sánh tiến bộ mà học sinh không học thuộc bài.</p>' +
+      '<p class="muted">Hai dạng A và B tương đương: cùng các âm, vần, khác tiếng. Đã sang giai đoạn vần thì chỉ đo vần. Dùng A cho đầu vào, B cho đầu ra để so sánh tiến bộ mà học sinh không học thuộc bài.</p>' +
       '<div class="form-grid">' + studentField('ab-stu', ab.studentId) +
       '<fieldset class="field"><legend>Thời điểm</legend>' + ui.segmented('ab-phase', [{ id: 'dau-vao', label: 'Đầu vào' }, { id: 'dau-ra', label: 'Đầu ra' }], ab.phase, 'Thời điểm') + '</fieldset>' +
       '<fieldset class="field"><legend>Dạng bài</legend>' + ui.segmented('ab-form', [{ id: 'A', label: 'Dạng A' }, { id: 'B', label: 'Dạng B' }], ab.form, 'Dạng bài') + '</fieldset>' +
-      '<div class="field"><label for="ab-scope">Phạm vi</label><select id="ab-scope" name="scope">' +
-      D.GROUPS.map(function (g) { return '<option value="' + g.id + '"' + (g.id === ab.scope ? ' selected' : '') + '>Nhóm 1 đến ' + g.id + '</option>'; }).join('') + '</select></div></div>' +
+      '<div class="field"><label for="ab-scope">Đo các âm, vần đã học tới</label>' + ui.groupSelect('ab-scope', 'scope', ab.scope) + '</div></div>' +
       '<div class="ab-grid">' + ab.items.map(function (x, i) {
         return '<div class="ab-cell' + (x.result === true ? ' is-ok' : x.result === false ? ' is-miss' : '') + '">' +
           '<span class="ab-num num">' + (i + 1) + '</span><span class="ab-word reading">' + ui.esc(x.tieng) + '</span>' +
@@ -221,9 +222,10 @@
     S.state.library.filter(function (x) { return x.kind === 'truyen'; }).forEach(function (x) {
       out.push({ id: x.id, title: x.title, text: x.content.story, questions: x.content.questions.map(function (q) { return q.q; }) });
     });
-    D.GROUPS.slice(0, S.state.classInfo.progress).forEach(function (g) {
+    D.GROUPS.slice(0, S.state.classInfo.progress).reverse().forEach(function (g) {
+      if (!g.sentences.length) return;
       out.push({ id: 'g' + g.id, title: 'Câu nhóm ' + g.id + ' (' + g.title + ')', text: g.sentences.join(' '),
-        questions: ['Câu đầu tiên nói về ai?', 'Em hãy đọc lại câu có tiếng vần ' + g.vans[0] + '.'] });
+        questions: ['Câu đầu tiên nói về ai?', 'Em hãy đọc lại câu có tiếng chứa ' + D.unitLabel(g.vans[0]) + '.'] });
     });
     return out;
   }
@@ -312,6 +314,7 @@
     // Liên kết sâu: #/danh-gia/phieu/<mã HS>/<nhóm>/<vần>
     if (tab.id === 'phieu' && params[1] && !phieu.sess) {
       phieu.setup.studentId = params[1];
+      if (params[2]) phieu.setup.group = Number(params[2]);
       if (params[3]) phieu.setup.vans = [params[3]];
       history.replaceState(null, '', '#/danh-gia/phieu');
     }
@@ -410,6 +413,7 @@
       if (f === 'phieu-setup') {
         if (t.name === 'studentId') phieu.setup.studentId = t.value;
         if (t.name === 'ph-phase') phieu.setup.phase = t.value;
+        if (t.name === 'group') { phieu.setup.group = Number(t.value); phieu.setup.vans = null; VV.app.refresh(); }
         return;
       }
       if (t.name === 'ph-err') { phieu.sess.items[phieu.sess.idx].error = t.value; if (phieu.sess.idx < phieu.sess.items.length - 1) { phieu.sess.idx++; } VV.app.refresh(); return; }
