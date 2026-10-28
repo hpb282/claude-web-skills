@@ -78,7 +78,7 @@
       (g.id !== S.state.classInfo.progress ? '<button type="button" class="btn" data-act="set-progress">Đặt làm bài đang học</button>' : '') +
       '<button type="button" class="btn" data-act="print-cards">' + ui.icon('printer') + 'In thẻ ghép tiếng</button>' +
       '<button type="button" class="btn" data-act="print-sheet">' + ui.icon('printer') + 'In phiếu luyện viết</button></div></header>' +
-      (ui.canSpeak() ? '' : '<div class="banner banner-soft">Máy này chưa có giọng đọc tiếng Việt nên nút nghe sẽ không phát âm. Giáo viên đọc mẫu trực tiếp, hoặc cài giọng tiếng Việt cho hệ điều hành rồi mở lại trang.</div>') +
+      '<div class="banner banner-soft" id="voice-banner"' + (ui.canSpeak() ? ' hidden' : '') + '>Máy này chưa đọc được tiếng Việt nên nút nghe có thể không phát âm. Giáo viên đọc mẫu trực tiếp, hoặc <a href="#/cai-dat/giong">kiểm tra giọng đọc trong Cài đặt</a>.</div>' +
 
       '<section class="panel"><h2 class="panel-title">' + (g.kind === 'am' ? 'Âm và chữ' : 'Vần') + '</h2><div class="van-row">' +
       g.vans.map(function (v) {
@@ -242,4 +242,8 @@
     }
   };
   VV.lessons = { writingSheetHTML: writingSheetHTML, cardHTML: cardHTML };
+  document.addEventListener('vv-voices', function () {
+    var b = document.getElementById('voice-banner');
+    if (b) b.hidden = ui.canSpeak();
+  });
 })(window.VV = window.VV || {});

@@ -204,7 +204,8 @@
       return '<section class="panel draft is-busy" aria-busy="true"><div class="draft-head"><h2 class="panel-title">Đang soạn bản nháp…</h2>' +
         '<button type="button" class="btn btn-sm" data-act="stop">Dừng</button></div>' +
         '<div class="skeleton"><span></span><span></span><span></span><span></span></div>' +
-        '<p class="muted">AI thường mất 10 đến 60 giây. Bản nháp sẽ được kiểm tra theo kho tiếng ngay khi về.</p></section>';
+        '<p class="muted" id="ai-progress" role="status">' + ui.esc(busy.status || 'Đang chờ AI trả lời. Thường mất 10 đến 60 giây.') + '</p>' +
+        '<p class="muted">Mạng chập hoặc máy chủ bận thì app tự thử lại, tối đa 3 lần. Bản nháp sẽ được kiểm tra theo kho tiếng ngay khi về.</p></section>';
     }
     var d = drafts[t.tool];
     if (!d) {
@@ -399,12 +400,27 @@
     var controller = useAI ? new AbortController() : null;
     var startedAt = Date.now();
     if (useAI) { busy = { tool: t.tool, controller: controller }; VV.app.refresh(); }
-    VV.ai.draft(t.tool, params, useAI, controller && controller.signal).then(function (res) {
+    function status(text) {
+      if (!busy) return;
+      busy.status = text;
+      var el = document.getElementById('ai-progress');
+      if (el) el.textContent = text;
+    }
+    var hooks = {
+      signal: controller && controller.signal,
+      onProgress: function (n) { status('AI đang viết… đã nhận ' + n.toLocaleString('vi-VN') + ' ký tự.'); },
+      onRetry: function (n, wait, err) {
+        status(err && err.badJSON ? 'Câu trả lời chưa đúng dạng, đang xin AI soạn lại…' :
+          'Kết nối chập chờn. Đang thử lại lần ' + n + (wait ? ' sau ' + wait + ' giây' : '') + '…');
+      }
+    };
+    VV.ai.draft(t.tool, params, useAI, hooks).then(function (res) {
       drafts[t.tool] = makeDraft(t.tool, res.data, res.source, params, { startedAt: startedAt });
       if (t.tool === 'exercises' && !res.data.tasks.length) throw new Error('AI không trả về nhiệm vụ nào. Bấm soạn lại.');
       ui.toast(useAI ? 'AI đã soạn xong bản nháp. Hãy kiểm tra trước khi duyệt.' : 'Đã soạn bản nháp từ mẫu.');
     }).catch(function (err) {
-      ui.toast(err.message, 'error');
+      if (err.name === 'AbortError') ui.toast('Đã dừng soạn.');
+      else ui.toast(err.message, 'error');
     }).then(function () {
       busy = null;
       if (VV.app.route === 'tro-ly') VV.app.refresh();

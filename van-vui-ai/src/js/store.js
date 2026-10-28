@@ -44,7 +44,7 @@
 
   function defaultSettings() {
     return {
-      ai: { provider: 'anthropic', model: 'claude-opus-5-5', baseUrl: '', remember: false },
+      ai: { provider: 'anthropic', model: 'claude-opus-5-5', baseUrl: '', remember: true },
       voice: { name: '', rate: 0.85 }
     };
   }

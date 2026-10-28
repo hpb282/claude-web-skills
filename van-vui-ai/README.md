@@ -22,6 +22,7 @@ Vào **Cài đặt, Kết nối AI**:
 - Key được gửi thẳng từ trình duyệt tới nhà cung cấp, không qua máy chủ nào khác.
 - Bỏ chọn "Ghi nhớ key" khi dùng máy chung: key sẽ mất khi đóng thẻ.
 - Chỉ gửi cho AI: vần, yêu cầu cần đạt, loại lỗi và danh sách vần trong kho tiếng. Không gửi mã học sinh, kết quả hay ảnh bài viết.
+- Mạng chập hoặc máy chủ AI bận (lỗi 429, 5xx, 529): app tự thử lại tối đa 3 lần, chờ tăng dần. Câu trả lời được nhận dần (streaming) nên không bị ngắt khi AI soạn lâu; với Claude, câu trả lời được ép theo khuôn JSON nên không hỏng định dạng.
 - Không có key hoặc mất mạng: mọi công cụ soạn bài vẫn có nút **Soạn từ mẫu có sẵn**.
 
 ## Các chức năng (theo đề xuất sản phẩm)
@@ -74,7 +75,7 @@ Thứ tự là gợi ý theo tiến độ phổ biến, chưa bám riêng bộ s
 
 ## Giọng đọc
 
-Nút nghe dùng giọng tiếng Việt có sẵn trong hệ điều hành. Nếu máy chưa có: Windows vào Cài đặt, Thời gian và ngôn ngữ, Giọng nói, thêm Tiếng Việt; Android và iPhone cài giọng tiếng Việt trong mục chuyển văn bản thành giọng nói.
+Nút nghe dùng giọng tiếng Việt có sẵn trong hệ điều hành. App luôn thử đọc (kể cả khi máy không liệt kê giọng, như nhiều điện thoại Android), ưu tiên giọng cài trong máy, tự chuyển sang giọng khác nếu giọng đang dùng không phát tiếng. Kiểm tra ở **Cài đặt → Giọng đọc → Nghe thử**. Nếu máy chưa có giọng: Windows vào Cài đặt, Thời gian và ngôn ngữ, Giọng nói, thêm Tiếng Việt; Android và iPhone cài giọng tiếng Việt trong mục chuyển văn bản thành giọng nói.
 
 ## Cấu trúc
 

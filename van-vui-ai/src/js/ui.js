@@ -107,33 +107,96 @@
   }
 
   // ---------- Giọng đọc ----------
-  var viVoice = null;
-  function pickVoice() {
-    if (!('speechSynthesis' in window)) return null;
-    var voices = window.speechSynthesis.getVoices() || [];
-    var pref = VV.store && VV.store.settings && VV.store.settings.voice.name;
-    var vi = voices.filter(function (v) { return /^vi/i.test(v.lang); });
-    viVoice = vi.filter(function (v) { return v.name === pref; })[0] || vi[0] || null;
-    return viVoice;
-  }
-  if ('speechSynthesis' in window) {
-    pickVoice();
-    window.speechSynthesis.onvoiceschanged = function () { pickVoice(); document.dispatchEvent(new Event('vv-voices')); };
-  }
+  // Luôn thử đọc, kể cả khi máy chưa liệt kê giọng tiếng Việt (Android hay trả danh sách rỗng nhưng vẫn đọc được).
+  // Thứ tự thử: giọng giáo viên chọn, giọng cài trong máy (không cần mạng), giọng trực tuyến, cuối cùng để trình duyệt tự chọn theo vi-VN.
+  var speech = { state: 'unknown', token: 0, keep: [] }; // state: unknown | ok | fail
+  function hasTTS() { return !!window.speechSynthesis && typeof window.SpeechSynthesisUtterance === 'function'; }
+  function allVoices() { try { return window.speechSynthesis.getVoices() || []; } catch (e) { return []; } }
   function viVoices() {
-    if (!('speechSynthesis' in window)) return [];
-    return (window.speechSynthesis.getVoices() || []).filter(function (v) { return /^vi/i.test(v.lang); });
+    if (!hasTTS()) return [];
+    return allVoices().filter(function (v) { return /^vi([-_]|$)/i.test(v.lang) || /vietnam|tiếng việt/i.test(v.name); });
   }
-  function canSpeak() { return !!pickVoice(); }
-  function speak(text) {
-    if (!('speechSynthesis' in window)) { toast('Trình duyệt này không có chức năng đọc.', 'error'); return; }
-    var v = pickVoice();
-    if (!v) { toast('Máy chưa có giọng đọc tiếng Việt. Giáo viên đọc mẫu giúp em nhé.', 'error'); return; }
-    window.speechSynthesis.cancel();
-    var u = new SpeechSynthesisUtterance(text);
-    u.voice = v; u.lang = v.lang;
-    u.rate = (VV.store.settings.voice.rate || 0.85);
-    window.speechSynthesis.speak(u);
+  function voiceOrder() {
+    var vi = viVoices();
+    var pref = VV.store && VV.store.settings && VV.store.settings.voice && VV.store.settings.voice.name;
+    var chosen = vi.filter(function (v) { return v.name === pref; });
+    var local = vi.filter(function (v) { return v.name !== pref && v.localService; });
+    var online = vi.filter(function (v) { return v.name !== pref && !v.localService; });
+    return chosen.concat(local, online).slice(0, 3);
+  }
+  function speechChanged() { document.dispatchEvent(new Event('vv-voices')); }
+  if (hasTTS()) {
+    allVoices();
+    var onVoices = function () { if (speech.state === 'fail') speech.state = 'unknown'; speechChanged(); };
+    if (window.speechSynthesis.addEventListener) window.speechSynthesis.addEventListener('voiceschanged', onVoices);
+    else window.speechSynthesis.onvoiceschanged = onVoices;
+  }
+  // canSpeak: dùng để tự đọc và hiện cảnh báo. Chỉ báo "không đọc được" khi đã thử thật mà hỏng.
+  function canSpeak() { return hasTTS() && speech.state !== 'fail'; }
+  function speechStatus() { return hasTTS() ? speech.state : 'none'; }
+
+  function stopSpeak() {
+    speech.token++;
+    if (hasTTS()) { try { window.speechSynthesis.cancel(); } catch (e) { /* bỏ qua */ } }
+  }
+  function speak(text, onDone) {
+    if (!hasTTS()) { toast('Trình duyệt này không có chức năng đọc. Giáo viên đọc mẫu giúp em nhé.', 'error'); return; }
+    text = String(text || '').trim();
+    if (!text) return;
+    var synth = window.speechSynthesis;
+    var token = ++speech.token;
+    var tries = voiceOrder();
+    tries.push(null); // cuối cùng: chỉ đặt ngôn ngữ vi-VN, để trình duyệt tự chọn giọng
+    try { synth.cancel(); } catch (e) { /* bỏ qua */ }
+    // Chrome hay im lặng nếu đọc ngay sau cancel(): chờ một nhịp ngắn.
+    setTimeout(function () { attempt(0); }, 80);
+
+    function attempt(i) {
+      if (token !== speech.token) return;
+      var v = tries[i];
+      var u = new SpeechSynthesisUtterance(text);
+      u.lang = v ? v.lang : 'vi-VN';
+      if (v) u.voice = v;
+      u.rate = (VV.store && VV.store.settings.voice.rate) || 0.85;
+      var started = false, finished = false;
+      speech.keep.push(u); // giữ tham chiếu để trình duyệt không thu hồi giữa chừng
+      if (speech.keep.length > 6) speech.keep.shift();
+      var watch = setTimeout(function () { if (!started) fail(); }, v && !v.localService ? 5000 : 3000);
+      function end() { finished = true; clearTimeout(watch); }
+      function fail() {
+        if (finished) return;
+        end();
+        if (token !== speech.token) return;
+        try { synth.cancel(); } catch (e) { /* bỏ qua */ }
+        if (i + 1 < tries.length) { setTimeout(function () { attempt(i + 1); }, 80); return; }
+        var was = speech.state;
+        speech.state = 'fail';
+        if (was !== 'fail') speechChanged();
+        toast('Máy chưa đọc được tiếng Việt. Vào Cài đặt, Giọng đọc để kiểm tra; trong lúc đó giáo viên đọc mẫu giúp em nhé.', 'error');
+        if (onDone) onDone(false);
+      }
+      u.onstart = function () {
+        started = true; clearTimeout(watch);
+        if (speech.state !== 'ok') { speech.state = 'ok'; speechChanged(); }
+      };
+      u.onend = function () {
+        if (finished) return;
+        end();
+        // Một số trình duyệt không báo "bắt đầu" nhưng vẫn đọc xong: coi là đọc được.
+        if (!started && speech.state !== 'ok') { speech.state = 'ok'; speechChanged(); }
+        if (onDone) onDone(true);
+      };
+      u.onerror = function (e) {
+        var code = e && e.error;
+        if (code === 'interrupted' || code === 'canceled') { end(); return; } // bị nút khác ngắt: không phải lỗi
+        if (code === 'not-allowed') { end(); return; } // trình duyệt chờ người dùng bấm trước: lần bấm sau sẽ đọc
+        fail();
+      };
+      try {
+        if (synth.paused) synth.resume();
+        synth.speak(u);
+      } catch (e) { fail(); }
+    }
   }
   function speakBtn(text, label, cls) {
     return '<button type="button" class="btn-icon ' + (cls || '') + '" data-speak="' + esc(text) + '" aria-label="' + esc(label || ('Nghe: ' + text)) + '" title="' + esc(label || 'Nghe đọc mẫu') + '">' + icon('volume') + '</button>';
@@ -295,7 +358,7 @@
 
   VV.ui = {
     esc: esc, icon: icon, toast: toast, openDialog: openDialog, closeDialog: closeDialog, confirmDialog: confirmDialog,
-    speak: speak, speakBtn: speakBtn, canSpeak: canSpeak, viVoices: viVoices,
+    speak: speak, speakBtn: speakBtn, canSpeak: canSpeak, viVoices: viVoices, speechStatus: speechStatus, hasTTS: hasTTS, stopSpeak: stopSpeak,
     vanWord: vanWord, vanText: vanText, khoText: khoText, groupSelect: groupSelect,
     fmtDate: fmtDate, fmtShort: fmtShort, pct: pct, dec: dec, download: download, csv: csv, printHTML: printHTML, copyText: copyText,
     readImage: readImage, reducedMotion: reducedMotion, segmented: segmented, studentOptions: studentOptions, emptyState: emptyState

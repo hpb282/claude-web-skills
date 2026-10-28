@@ -225,16 +225,27 @@
     if (btn && !btn.disabled) btn.focus();
   }
 
+  var INSTALL_VOICE = 'Cài giọng tiếng Việt: trên Windows vào Cài đặt, Thời gian và ngôn ngữ, Giọng nói, thêm Tiếng Việt; trên Android vào Cài đặt, Chuyển văn bản thành giọng nói, tải dữ liệu giọng tiếng Việt; trên iPhone, iPad vào Cài đặt, Trợ năng, Nội dung được đọc, Giọng nói, tải Tiếng Việt. Sau đó mở lại trang.';
   function voiceSection() {
     var voices = ui.viVoices();
     var v = S.settings.voice;
+    var st = ui.speechStatus();
+    var status = st === 'none' ? ['is-miss', 'Trình duyệt này không có chức năng đọc. Dùng Chrome, Edge hoặc Safari bản mới.']
+      : st === 'ok' ? ['is-ok', 'Đã đọc được trên máy này.']
+      : st === 'fail' ? ['is-miss', 'Lần đọc gần nhất không phát ra tiếng. ' + INSTALL_VOICE]
+      : ['', voices.length ? 'Có ' + voices.length + ' giọng tiếng Việt. Bấm Nghe thử để kiểm tra.' : 'Máy không liệt kê giọng tiếng Việt, nhưng điện thoại thường vẫn đọc được. Bấm Nghe thử để kiểm tra.'];
+    var hasPref = voices.some(function (x) { return x.name === v.name; });
     return '<section class="panel" id="giong" aria-labelledby="giong-title"><h2 class="panel-title" id="giong-title">Giọng đọc mẫu</h2>' +
-      (voices.length
-        ? '<form data-form="voice"><div class="form-grid"><div class="field"><label for="vc-name">Giọng</label><select id="vc-name" name="name">' +
-          voices.map(function (x) { return '<option' + (x.name === v.name ? ' selected' : '') + '>' + ui.esc(x.name) + '</option>'; }).join('') + '</select></div>' +
-          '<div class="field"><label for="vc-rate">Tốc độ đọc <span class="num" id="vc-rate-val">' + String(v.rate).replace('.', ',') + '</span></label><input id="vc-rate" name="rate" type="range" min="0.5" max="1.2" step="0.05" value="' + v.rate + '"></div></div>' +
-          '<div class="btn-row"><button type="button" class="btn" data-speak="Bé và bạn ra sân.">' + ui.icon('volume') + 'Nghe thử</button></div></form>'
-        : '<p>Máy này chưa có giọng đọc tiếng Việt. Trên Windows: Cài đặt, Thời gian và ngôn ngữ, Giọng nói, thêm Tiếng Việt. Trên Android và iPhone: cài giọng tiếng Việt trong phần Chuyển văn bản thành giọng nói. Sau đó mở lại trang.</p>') +
+      '<form data-form="voice"><div class="form-grid">' +
+      '<div class="field"><label for="vc-name">Giọng</label><select id="vc-name" name="name">' +
+      '<option value=""' + (hasPref ? '' : ' selected') + '>Tự chọn (ưu tiên giọng cài trong máy)</option>' +
+      voices.map(function (x) {
+        return '<option value="' + ui.esc(x.name) + '"' + (x.name === v.name ? ' selected' : '') + '>' + ui.esc(x.name) + (x.localService ? '' : ' (cần mạng)') + '</option>';
+      }).join('') + '</select>' +
+      '<p class="hint">Giọng “cần mạng” đọc hay hơn nhưng dễ mất tiếng khi mạng yếu. App tự chuyển sang giọng khác nếu giọng đã chọn không đọc.</p></div>' +
+      '<div class="field"><label for="vc-rate">Tốc độ đọc <span class="num" id="vc-rate-val">' + String(v.rate).replace('.', ',') + '</span></label><input id="vc-rate" name="rate" type="range" min="0.5" max="1.2" step="0.05" value="' + v.rate + '"></div></div>' +
+      '<div class="btn-row"><button type="button" class="btn" data-speak="Bé và bạn ra sân.">' + ui.icon('volume') + 'Nghe thử</button></div>' +
+      '<p class="ai-test ' + status[0] + '" role="status" id="voice-status">' + ui.esc(status[1]) + '</p></form>' +
       '</section>';
   }
 
@@ -300,7 +311,9 @@
         btn.disabled = true; btn.textContent = 'Đang kiểm tra…';
         out.className = 'ai-test'; out.textContent = 'Đang gửi một yêu cầu ngắn…';
         var t0 = Date.now();
-        VV.ai.testConnection(testing.signal).then(function (text) {
+        VV.ai.testConnection(testing.signal, function (n, wait) {
+          out.textContent = 'Chưa nhận được trả lời. Đang thử lại lần ' + n + (wait ? ' sau ' + wait + ' giây' : '') + '…';
+        }).then(function (text) {
           out.className = 'ai-test is-ok';
           out.textContent = 'Kết nối được. AI trả lời “' + String(text).trim().slice(0, 40) + '” sau ' + ((Date.now() - t0) / 1000).toFixed(1).replace('.', ',') + ' giây.';
         }, function (err) {
@@ -523,5 +536,13 @@
     }
   };
 
-  document.addEventListener('vv-voices', function () { if (VV.app.route === 'cai-dat') VV.app.refresh(); });
+  // Danh sách giọng hoặc trạng thái đọc thay đổi: chỉ vẽ lại mục Giọng đọc, không làm mất chỗ đang thao tác.
+  document.addEventListener('vv-voices', function () {
+    if (VV.app.route !== 'cai-dat') return;
+    var sec = document.getElementById('giong');
+    if (!sec || sec.contains(document.activeElement) && document.activeElement.tagName === 'SELECT') return;
+    var focusedSpeak = document.activeElement && document.activeElement.hasAttribute('data-speak');
+    sec.outerHTML = voiceSection();
+    if (focusedSpeak) { var b = document.querySelector('#giong [data-speak]'); if (b) b.focus({ preventScroll: true }); }
+  });
 })(window.VV = window.VV || {});

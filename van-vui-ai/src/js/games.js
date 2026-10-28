@@ -177,7 +177,7 @@
 
   function close() {
     clearTimeout(advanceTimer);
-    if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+    ui.stopSpeak();
     root.classList.remove('is-open');
     root.setAttribute('hidden', '');
     root.innerHTML = '';

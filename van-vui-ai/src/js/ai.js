@@ -45,84 +45,172 @@
     return !!c.model;
   }
 
-  function httpError(status, bodyText) {
-    var msg = '';
+  function httpError(status, bodyText, retryAfter) {
+    var msg = '', type = '';
     try {
       var j = JSON.parse(bodyText);
       msg = (j.error && (j.error.message || j.error.type)) || j.message || '';
+      type = (j.error && j.error.type) || '';
     } catch (e) { msg = (bodyText || '').slice(0, 200); }
     var hint = '';
     if (status === 401 || status === 403) hint = 'API key không đúng hoặc chưa được cấp quyền. Kiểm tra lại key trong Cài đặt.';
     else if (status === 404) hint = 'Không tìm thấy model hoặc địa chỉ. Kiểm tra tên model trong Cài đặt.';
+    else if (status === 402) hint = 'Tài khoản AI đã hết hạn mức hoặc chưa thanh toán.';
     else if (status === 429) hint = 'Đã vượt giới hạn gọi hoặc hết hạn mức. Đợi một lúc rồi thử lại.';
+    else if (status === 529 || type === 'overloaded_error') hint = 'Máy chủ AI đang quá tải. Thử lại sau ít phút.';
     else if (status >= 500) hint = 'Máy chủ AI đang bận. Thử lại sau ít phút.';
     else hint = 'Yêu cầu bị từ chối.';
     var err = new Error(hint + (msg ? ' Chi tiết: ' + msg : ''));
     err.status = status;
+    err.body = bodyText || '';
+    err.retryAfter = retryAfter ? Number(retryAfter) : null;
+    err.retryable = RETRY_STATUS.indexOf(status) !== -1 || type === 'overloaded_error' || type === 'api_error';
     return err;
   }
 
-  // Model Claude hỗ trợ tham số effort và cơ chế chuyển model dự phòng khi bị từ chối.
+  // ---------- Kết nối bền vững: nhận dần (streaming), tự thử lại khi mạng chập hoặc máy chủ bận ----------
+  var RETRY_STATUS = [408, 409, 425, 429, 500, 502, 503, 504, 529];
+  var MAX_ATTEMPTS = 3;
+  var IDLE_MS = 90000; // không nhận được gì trong 90 giây thì coi là rớt kết nối
+
+  function sleep(ms, signal) {
+    return new Promise(function (resolve, reject) {
+      var t = setTimeout(resolve, ms);
+      if (signal) signal.addEventListener('abort', function () { clearTimeout(t); reject(abortError()); });
+    });
+  }
+  function abortError() { var e = new Error('Đã dừng soạn.'); e.name = 'AbortError'; return e; }
+
+  // Đọc luồng Server-Sent Events, gọi onData(tênSựKiện, chuỗiData) cho từng sự kiện.
+  function readSSE(res, onData, touch) {
+    var reader = res.body.getReader();
+    var dec = new TextDecoder();
+    var buf = '';
+    function handle(chunk) {
+      var ev = '', data = [];
+      chunk.split(/\r?\n/).forEach(function (line) {
+        if (line.indexOf('event:') === 0) ev = line.slice(6).trim();
+        else if (line.indexOf('data:') === 0) data.push(line.slice(5).replace(/^ /, ''));
+      });
+      if (data.length) onData(ev, data.join('\n'));
+    }
+    function pump() {
+      return reader.read().then(function (r) {
+        if (r.done) { if (buf.trim()) handle(buf); return; }
+        touch();
+        buf += dec.decode(r.value, { stream: true });
+        var m;
+        while ((m = /\r?\n\r?\n/.exec(buf))) {
+          var chunk = buf.slice(0, m.index);
+          buf = buf.slice(m.index + m[0].length);
+          handle(chunk);
+        }
+        return pump();
+      });
+    }
+    return pump();
+  }
+  function isStream(res) { return res.body && /event-stream/i.test(res.headers.get('content-type') || ''); }
+  function failIfBad(res) {
+    if (res.ok) return Promise.resolve(res);
+    return res.text().then(function (t) { throw httpError(res.status, t, res.headers.get('retry-after')); });
+  }
+
   function claudeFeatures(model) {
     var effort = /^claude-(opus|sonnet|haiku|fable)-5/.test(model);
     var fallback = /^claude-(opus-5|sonnet-5-5|fable-5)/.test(model);
     return { effort: effort, fallback: fallback };
   }
 
-  function callAnthropic(c, system, user, signal, opts) {
+  function callAnthropic(c, system, user, ctx, opts) {
     var f = claudeFeatures(c.model);
-    var body = { model: c.model, max_tokens: opts.maxTokens || 16000, system: system, messages: [{ role: 'user', content: user }] };
+    var body = { model: c.model, max_tokens: opts.maxTokens || 16000, stream: true, system: system, messages: [{ role: 'user', content: user }] };
     var headers = {
       'content-type': 'application/json',
       'x-api-key': c.key,
       'anthropic-version': '2026-10-21',
       'anthropic-dangerous-direct-browser-access': 'true'
     };
-    if (f.effort) body.output_config = { effort: opts.effort || 'medium' };
+    var oc = {};
+    if (f.effort) oc.effort = opts.effort || 'medium';
+    if (opts.schema && !opts.noSchema) oc.format = { type: 'json_schema', schema: opts.schema };
+    if (Object.keys(oc).length) body.output_config = oc;
     if (f.fallback && !opts.noFallback) {
       body.fallbacks = 'default';
       headers['anthropic-beta'] = 'server-side-fallback-2026-07-01';
     }
-    return fetch('https://api.anthropic.com/v1/messages', { method: 'POST', headers: headers, body: JSON.stringify(body), signal: signal })
+    return fetch('https://api.anthropic.com/v1/messages', { method: 'POST', headers: headers, body: JSON.stringify(body), signal: ctx.signal })
+      .then(failIfBad)
       .then(function (res) {
-        return res.text().then(function (t) {
-          if (!res.ok) {
-            // Một số tài khoản chưa bật tính năng dự phòng: gửi lại không kèm tham số đó.
-            if (res.status === 400 && /fallback|beta/i.test(t) && !opts.noFallback) {
-              return callAnthropic(c, system, user, signal, Object.assign({}, opts, { noFallback: true }));
-            }
-            throw httpError(res.status, t);
-          }
-          var j = JSON.parse(t);
-          if (j.stop_reason === 'refusal') throw new Error('AI từ chối yêu cầu này. Hãy diễn đạt lại yêu cầu cần đạt rồi thử lại.');
-          if (j.stop_reason === 'max_tokens') throw new Error('Câu trả lời của AI bị cắt giữa chừng. Giảm số nhiệm vụ rồi thử lại.');
-          return (j.content || []).filter(function (b) { return b.type === 'text'; }).map(function (b) { return b.text; }).join('');
+        if (!isStream(res)) {
+          // Câu trả lời trọn gói (máy chủ trung gian không chuyển tiếp dạng nhận dần).
+          return res.json().then(function (j) {
+            if (j.stop_reason === 'refusal') throw new Error('AI từ chối yêu cầu này. Hãy diễn đạt lại yêu cầu cần đạt rồi thử lại.');
+            if (j.stop_reason === 'max_tokens') throw new Error('Câu trả lời của AI bị cắt giữa chừng. Giảm số nhiệm vụ rồi thử lại.');
+            return (j.content || []).filter(function (b) { return b.type === 'text'; }).map(function (b) { return b.text; }).join('');
+          });
+        }
+        var text = '', stop = null, streamErr = null;
+        return readSSE(res, function (ev, data) {
+          var j; try { j = JSON.parse(data); } catch (e) { return; }
+          if (j.type === 'content_block_delta' && j.delta && j.delta.type === 'text_delta') { text += j.delta.text; ctx.progress(text.length); }
+          else if (j.type === 'message_delta' && j.delta) stop = j.delta.stop_reason || stop;
+          else if (j.type === 'error') streamErr = httpError(j.error && j.error.type === 'overloaded_error' ? 529 : 500, data);
+        }, ctx.touch).then(function () {
+          if (streamErr) throw streamErr;
+          if (stop === 'refusal') throw new Error('AI từ chối yêu cầu này. Hãy diễn đạt lại yêu cầu cần đạt rồi thử lại.');
+          if (stop === 'max_tokens') throw new Error('Câu trả lời của AI bị cắt giữa chừng. Giảm số nhiệm vụ rồi thử lại.');
+          if (!stop) { var e = new Error('Kết nối bị ngắt khi đang nhận câu trả lời.'); e.retryable = true; throw e; }
+          return text;
         });
+      })
+      .catch(function (e) {
+        // Tài khoản chưa bật tính năng dự phòng, hoặc model không hỗ trợ khuôn JSON: gửi lại không kèm phần đó.
+        if (e.status === 400 && /fallback|beta/i.test(e.body) && !opts.noFallback) return callAnthropic(c, system, user, ctx, Object.assign({}, opts, { noFallback: true }));
+        if (e.status === 400 && /output_config|format|schema/i.test(e.body) && opts.schema && !opts.noSchema) return callAnthropic(c, system, user, ctx, Object.assign({}, opts, { noSchema: true }));
+        // Trình duyệt chặn tiêu đề beta (lỗi mạng ngay lần đầu): thử lại không kèm.
+        if (e instanceof TypeError && f.fallback && !opts.noFallback && !ctx.signal.aborted) return callAnthropic(c, system, user, ctx, Object.assign({}, opts, { noFallback: true }));
+        throw e;
       });
   }
 
-  function callOpenAI(c, system, user, signal, opts) {
+  function callOpenAI(c, system, user, ctx, opts) {
     var base = c.provider === 'compatible' ? c.baseUrl.replace(/\/+$/, '') : 'https://api.openai.com/v1';
-    var body = { model: c.model, messages: [{ role: 'system', content: system }, { role: 'user', content: user }] };
+    var body = { model: c.model, stream: true, messages: [{ role: 'system', content: system }, { role: 'user', content: user }] };
     if (c.provider === 'openai' && opts.json) body.response_format = { type: 'json_object' };
     return fetch(base + '/chat/completions', {
       method: 'POST',
       headers: { 'content-type': 'application/json', authorization: 'Bearer ' + c.key },
-      body: JSON.stringify(body), signal: signal
-    }).then(function (res) {
-      return res.text().then(function (t) {
-        if (!res.ok) throw httpError(res.status, t);
-        var j = JSON.parse(t);
+      body: JSON.stringify(body), signal: ctx.signal
+    }).then(failIfBad).then(function (res) {
+      // Một số máy chủ tương thích không hỗ trợ nhận dần: đọc cả câu trả lời.
+      if (!isStream(res)) {
+        return res.text().then(function (t) {
+          var j = JSON.parse(t);
+          var ch = j.choices && j.choices[0];
+          if (!ch) throw new Error('AI không trả về nội dung.');
+          if (ch.finish_reason === 'length') throw new Error('Câu trả lời của AI bị cắt giữa chừng. Giảm số nhiệm vụ rồi thử lại.');
+          return ch.message && ch.message.content || '';
+        });
+      }
+      var text = '', finish = null;
+      return readSSE(res, function (ev, data) {
+        if (data === '[DONE]') { finish = finish || 'stop'; return; }
+        var j; try { j = JSON.parse(data); } catch (e) { return; }
         var ch = j.choices && j.choices[0];
-        if (!ch) throw new Error('AI không trả về nội dung.');
-        if (ch.finish_reason === 'length') throw new Error('Câu trả lời của AI bị cắt giữa chừng. Giảm số nhiệm vụ rồi thử lại.');
-        return ch.message && ch.message.content || '';
+        if (!ch) return;
+        if (ch.delta && ch.delta.content) { text += ch.delta.content; ctx.progress(text.length); }
+        if (ch.finish_reason) finish = ch.finish_reason;
+      }, ctx.touch).then(function () {
+        if (finish === 'length') throw new Error('Câu trả lời của AI bị cắt giữa chừng. Giảm số nhiệm vụ rồi thử lại.');
+        if (!finish) { var e = new Error('Kết nối bị ngắt khi đang nhận câu trả lời.'); e.retryable = true; throw e; }
+        return text;
       });
     });
   }
 
-  function callGemini(c, system, user, signal, opts) {
-    var url = 'https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(c.model) + ':generateContent';
+  function callGemini(c, system, user, ctx, opts) {
+    var url = 'https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(c.model) + ':streamGenerateContent?alt=sse';
     var body = {
       systemInstruction: { parts: [{ text: system }] },
       contents: [{ role: 'user', parts: [{ text: user }] }]
@@ -131,31 +219,70 @@
     return fetch(url, {
       method: 'POST',
       headers: { 'content-type': 'application/json', 'x-goog-api-key': c.key },
-      body: JSON.stringify(body), signal: signal
-    }).then(function (res) {
-      return res.text().then(function (t) {
-        if (!res.ok) throw httpError(res.status, t);
-        var j = JSON.parse(t);
+      body: JSON.stringify(body), signal: ctx.signal
+    }).then(failIfBad).then(function (res) {
+      if (!isStream(res)) {
+        return res.json().then(function (j) {
+          var cand = (Array.isArray(j) ? j[0] : j).candidates;
+          cand = cand && cand[0];
+          var t = cand && cand.content && (cand.content.parts || []).map(function (p) { return p.text || ''; }).join('');
+          if (!t) throw new Error('AI không trả về nội dung.');
+          return t;
+        });
+      }
+      var text = '', finish = null, blocked = '';
+      return readSSE(res, function (ev, data) {
+        var j; try { j = JSON.parse(data); } catch (e) { return; }
+        if (j.promptFeedback && j.promptFeedback.blockReason) blocked = j.promptFeedback.blockReason;
         var cand = j.candidates && j.candidates[0];
-        if (!cand) throw new Error('AI không trả về nội dung' + (j.promptFeedback && j.promptFeedback.blockReason ? ' (bị chặn: ' + j.promptFeedback.blockReason + ').' : '.'));
-        return (cand.content && cand.content.parts || []).map(function (p) { return p.text || ''; }).join('');
+        if (!cand) return;
+        (cand.content && cand.content.parts || []).forEach(function (p) { if (p.text) text += p.text; });
+        ctx.progress(text.length);
+        if (cand.finishReason) finish = cand.finishReason;
+      }, ctx.touch).then(function () {
+        if (blocked) throw new Error('AI không trả về nội dung (bị chặn: ' + blocked + ').');
+        if (finish === 'MAX_TOKENS') throw new Error('Câu trả lời của AI bị cắt giữa chừng. Giảm số nhiệm vụ rồi thử lại.');
+        if (!text) { var e = new Error('AI không trả về nội dung.'); e.retryable = true; throw e; }
+        return text;
       });
     });
   }
 
+  // Gọi AI: tự thử lại tối đa 3 lần khi mạng chập, hết giờ chờ hoặc máy chủ bận.
+  // opts.onProgress(sốKýTựĐãNhận), opts.onRetry(lầnThử, sốGiâyChờ, lỗi)
   function complete(system, user, opts) {
     opts = opts || {};
     var c = cfg();
     if (!c.key) return Promise.reject(new Error('Chưa có API key. Mở Cài đặt để nhập key.'));
-    var p;
-    if (c.provider === 'anthropic') p = callAnthropic(c, system, user, opts.signal, opts);
-    else if (c.provider === 'gemini') p = callGemini(c, system, user, opts.signal, opts);
-    else p = callOpenAI(c, system, user, opts.signal, opts);
-    return p.catch(function (e) {
-      if (e.name === 'AbortError') throw new Error('Đã dừng soạn.');
-      if (e instanceof TypeError) throw new Error('Không kết nối được tới dịch vụ AI. Kiểm tra mạng, địa chỉ máy chủ, hoặc dịch vụ này không cho gọi trực tiếp từ trình duyệt.');
-      throw e;
-    });
+    if (c.provider === 'compatible' && !c.baseUrl) return Promise.reject(new Error('Chưa có địa chỉ API. Mở Cài đặt để nhập.'));
+    var attempt = 0;
+    function run() {
+      attempt++;
+      var ctl = new AbortController();
+      var timedOut = false, timer = null;
+      function touch() { clearTimeout(timer); timer = setTimeout(function () { timedOut = true; ctl.abort(); }, IDLE_MS); }
+      function onUserAbort() { ctl.abort(); }
+      if (opts.signal) { if (opts.signal.aborted) return Promise.reject(abortError()); opts.signal.addEventListener('abort', onUserAbort); }
+      touch();
+      var ctx = { signal: ctl.signal, touch: touch, progress: function (n) { if (opts.onProgress) opts.onProgress(n, attempt); } };
+      var call = c.provider === 'anthropic' ? callAnthropic : c.provider === 'gemini' ? callGemini : callOpenAI;
+      function cleanup() { clearTimeout(timer); if (opts.signal) opts.signal.removeEventListener('abort', onUserAbort); }
+      return call(c, system, user, ctx, opts).then(function (r) { cleanup(); return r; }, function (e) {
+        cleanup();
+        if (opts.signal && opts.signal.aborted) throw abortError();
+        var network = e instanceof TypeError || e.name === 'AbortError';
+        var retryable = timedOut || network || e.retryable;
+        if (retryable && attempt < MAX_ATTEMPTS) {
+          var wait = e.retryAfter ? Math.min(e.retryAfter * 1000, 20000) : [0, 2000, 5000][attempt] + Math.floor(Math.random() * 800);
+          if (opts.onRetry) opts.onRetry(attempt + 1, Math.round(wait / 1000), e);
+          return sleep(wait, opts.signal).then(run);
+        }
+        if (timedOut) throw new Error('AI không phản hồi sau ' + Math.round(IDLE_MS / 1000) + ' giây, đã thử ' + attempt + ' lần. Kiểm tra mạng rồi thử lại.');
+        if (network) throw new Error('Không kết nối được tới dịch vụ AI sau ' + attempt + ' lần thử. Kiểm tra mạng, địa chỉ máy chủ, hoặc dịch vụ này không cho gọi trực tiếp từ trình duyệt.');
+        throw e;
+      });
+    }
+    return run();
   }
 
   function extractJSON(text) {
@@ -163,13 +290,14 @@
     var fence = t.match(/```([\s\S]*?)```/);
     if (fence) t = fence[1];
     var a = t.indexOf('{'), b = t.lastIndexOf('}');
-    if (a === -1 || b === -1) throw new Error('AI không trả về đúng định dạng. Bấm soạn lại.');
+    function bad(msg) { var e = new Error(msg); e.badJSON = true; return e; }
+    if (a === -1 || b === -1) throw bad('AI không trả về đúng định dạng. Bấm soạn lại.');
     try { return JSON.parse(t.slice(a, b + 1)); }
-    catch (e) { throw new Error('AI trả về dữ liệu lỗi định dạng. Bấm soạn lại.'); }
+    catch (e) { throw bad('AI trả về dữ liệu lỗi định dạng. Bấm soạn lại.'); }
   }
 
-  function testConnection(signal) {
-    return complete('Bạn là trợ lý kiểm tra kết nối.', 'Trả lời đúng một từ: OK', { signal: signal, maxTokens: 2000, effort: 'low' });
+  function testConnection(signal, onRetry) {
+    return complete('Bạn là trợ lý kiểm tra kết nối.', 'Trả lời đúng một từ: OK', { signal: signal, maxTokens: 2000, effort: 'low', onRetry: onRetry });
   }
 
   // ---------- Lời nhắc ----------
@@ -385,21 +513,44 @@
     return { title: String(j.title || 'Phiếu luyện viết'), guide: strList(j.guide), words: strList(j.words), teacherNote: String(j.teacherNote || '') };
   }
 
+  // Khuôn JSON gửi kèm cho Claude để câu trả lời luôn đúng dạng.
+  function obj(props) { return { type: 'object', properties: props, required: Object.keys(props), additionalProperties: false }; }
+  var STR = { type: 'string' }, STRS = { type: 'array', items: { type: 'string' } };
+  var SCHEMAS = {
+    exercises: obj({ tasks: { type: 'array', items: obj({
+      level: { type: 'string', enum: ['ho-tro', 'tu-lam', 'van-dung'] },
+      type: { type: 'string', enum: ['nhan-dien', 'ghep-tieng', 'chon-tu', 'hoan-thanh-cau', 'doc', 'viet'] },
+      van: STR, prompt: STR, question: STR, options: STRS, answer: STR, teacherNote: STR
+    }) } }),
+    story: obj({ title: STR, story: STR, questions: { type: 'array', items: obj({ q: STR, a: STR }) } }),
+    parent: obj({ title: STR, read3: STRS, readWords: STRS, write2: STR, writeWords: STRS, tips: STRS, phone: STR }),
+    writing: obj({ title: STR, guide: STRS, words: STRS, teacherNote: STR })
+  };
+
   var TOOLS = {
-    exercises: { prompt: exercisesPrompt, template: templateExercises, norm: normExercises, maxTokens: 16000 },
-    story: { prompt: storyPrompt, template: templateStory, norm: normStory, maxTokens: 8000 },
-    parent: { prompt: parentPrompt, template: templateParent, norm: normParent, maxTokens: 8000 },
-    writing: { prompt: writingPrompt, template: templateWriting, norm: normWriting, maxTokens: 8000 }
+    exercises: { prompt: exercisesPrompt, template: templateExercises, norm: normExercises, maxTokens: 16000, effort: 'medium' },
+    story: { prompt: storyPrompt, template: templateStory, norm: normStory, maxTokens: 8000, effort: 'low' },
+    parent: { prompt: parentPrompt, template: templateParent, norm: normParent, maxTokens: 8000, effort: 'low' },
+    writing: { prompt: writingPrompt, template: templateWriting, norm: normWriting, maxTokens: 8000, effort: 'low' }
   };
 
   // Soạn bản nháp. useAI=false dùng mẫu có sẵn.
-  function draft(tool, params, useAI, signal) {
+  // hooks: { signal, onProgress(sốKýTự), onRetry(lầnThử, giâyChờ, lỗi) }
+  function draft(tool, params, useAI, hooks) {
     var t = TOOLS[tool];
     if (!useAI) return Promise.resolve({ data: t.norm(t.template(params)), source: 'mau' });
+    if (hooks && typeof hooks.aborted === 'boolean') hooks = { signal: hooks }; // cách gọi cũ: truyền thẳng signal
+    hooks = hooks || {};
     var k = VV.store.kho();
     var sys = systemPrompt(Array.from(k.vans), Array.from(k.extra), k.initials ? Array.from(k.initials) : null);
-    return complete(sys, t.prompt(params), { signal: signal, json: true, maxTokens: t.maxTokens })
-      .then(function (text) { return { data: t.norm(extractJSON(text)), source: 'ai' }; });
+    var opts = { signal: hooks.signal, json: true, maxTokens: t.maxTokens, effort: t.effort, schema: SCHEMAS[tool], onProgress: hooks.onProgress, onRetry: hooks.onRetry };
+    function once() { return complete(sys, t.prompt(params), opts).then(function (text) { return t.norm(extractJSON(text)); }); }
+    return once().catch(function (e) {
+      // AI trả về chữ không đọc được thành JSON: tự xin lại một lần.
+      if (!e.badJSON || (hooks.signal && hooks.signal.aborted)) throw e;
+      if (hooks.onRetry) hooks.onRetry(2, 0, e);
+      return once();
+    }).then(function (data) { return { data: data, source: 'ai' }; });
   }
 
   VV.ai = {
