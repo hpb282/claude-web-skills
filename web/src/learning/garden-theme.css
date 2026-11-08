@@ -134,6 +134,7 @@ textarea:focus-visible, select:focus-visible, summary:focus-visible {
   background: url('/assets/garden-accents.svg') center / 100% 100% no-repeat;
 }
 .orbit { border-color: #80a75785; border-width: 1.5px; }
+.orbit-one { left: 8%; right: 8%; }
 .orbit-two { border-color: #d18e5880; }
 .scene-speck { background: #df9b35; box-shadow: 0 0 0 4px #ffecae; }
 .speck-two { background: #e9816f; box-shadow: 0 0 0 4px #ffdfd2; }
