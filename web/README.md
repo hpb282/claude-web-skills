@@ -4,6 +4,21 @@ Web tập viết tiếng Việt cho học sinh tiểu học, phát triển trự
 
 ![Giao diện Mầm chữ với ba hạt câu văn 3D](docs/preview.png)
 
+## Bản HTML đóng gói, không cần npm
+
+[Tải gói HTML](https://github.com/hpb282/claude-web-skills/raw/refs/heads/codex/mam-chu-writing/downloads/mam-chu-html.zip), giải nén, mở thư mục đó bằng VS Code rồi chọn **Open with Live Server** trên `index.html`.
+
+Hai tệp `index.html` và `original.html` đã nhúng toàn bộ CSS, JavaScript, thư viện, font, hình ảnh và các mô hình cần chạy. Không cần thư mục `node_modules`, cài Node.js hoặc chạy npm khi dùng gói này. Có thể thử mở trực tiếp bằng Chrome/Cốc Cốc; môi trường kiểm thử chặn `file://`, nên cách đã xác nhận là chạy qua máy chủ tĩnh/Live Server. Chức năng học và cảnh gốc cũng đã được kiểm tra sau khi ngắt mạng, không phát sinh yêu cầu tải tài nguyên ngoài.
+
+Để tạo lại bản HTML từ mã nguồn:
+
+```bash
+npm run build:html
+npm run test:html
+```
+
+Kết quả ở `html-ready/`; kiểm thử dùng máy chủ tĩnh trong thư mục con và kiểm tra hoạt động ngoại tuyến. Giữ cả `original.html` cạnh `index.html` khi chia sẻ. Bài lưu ở địa chỉ/cổng khác không tự đồng bộ; có thể xuất/nhập `.json` để chuyển bài.
+
 ## Mở trên Windows
 
 1. Cài Node.js **22.12 trở lên** nếu máy chưa có.
