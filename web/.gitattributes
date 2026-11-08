@@ -1,0 +1,2 @@
+# Keep the Windows launcher ready to run when downloaded as a GitHub ZIP.
+CHAY-WEB.cmd -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol

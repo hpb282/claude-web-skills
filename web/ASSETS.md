@@ -29,3 +29,7 @@ Nike product names and the swoosh are used for this independent reference recrea
 - GSAP — https://gsap.com/community/standard-license/ — GSAP Standard License.
 
 Full dependency license files are included in the installed packages. Asset credits are also accessible from the website footer.
+
+## Mầm chữ learning extension
+
+The three seed models are procedural Three.js geometry in `src/learning/seed-scene.js`; the character illustrations and interface icons are authored SVG in `src/learning/icons.js`. The garden continues to use the generated `highlands.png` landscape credited above. Original models, photographs, decoders and the entire original application remain available at `/original.html`. `docs/preview.png` is a screenshot of the learning application, without student personal information.

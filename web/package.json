@@ -1,5 +1,5 @@
 {
-  "name": "nike-motion-store",
+  "name": "mam-chu-writing",
   "version": "1.0.0",
   "private": true,
   "type": "module",
@@ -7,7 +7,8 @@
     "dev": "vite --host 0.0.0.0",
     "build": "vite build",
     "preview": "vite preview --host 0.0.0.0",
-    "test": "playwright test"
+    "test": "playwright test",
+    "test:unit": "node --test tests-unit/*.test.js"
   },
   "dependencies": {
     "@fontsource-variable/dm-sans": "5.3.0",
