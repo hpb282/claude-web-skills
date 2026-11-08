@@ -33,3 +33,5 @@ Full dependency license files are included in the installed packages. Asset cred
 ## Mầm chữ learning extension
 
 The three seed models are procedural Three.js geometry in `src/learning/seed-scene.js`; the character illustrations and interface icons are authored SVG in `src/learning/icons.js`. The garden continues to use the generated `highlands.png` landscape credited above. Original models, photographs, decoders and the entire original application remain available at `/original.html`. `docs/preview.png` is a screenshot of the learning application, without student personal information.
+
+`public/assets/garden-accents.svg` is an authored vector illustration of leaves and flowers for the colourful learning theme. Its sun, sky and hills are CSS backgrounds in `src/learning/garden-theme.css`; the interactive seed models remain unchanged.

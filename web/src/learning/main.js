@@ -1,6 +1,7 @@
 import '@fontsource-variable/dm-sans';
 import '@fontsource/barlow-condensed/600.css';
 import './style.css';
+import './garden-theme.css';
 import gsap from 'gsap';
 import {Flip} from 'gsap/Flip';
 import {SeedScene} from './seed-scene.js';
@@ -66,7 +67,7 @@ function seedPicker(){return `<div class="seed-picker" aria-label="Ba loại h�
 
 function renderHome(){
   const w=work();
-  return `<section class="home-page"><div class="hero-content"><p class="eyebrow"><span class="little-leaf">${icon('leaf')}</span>Chào nhà văn nhỏ, mình cùng bắt đầu nhé!</p><h1>Gieo một ý tưởng.<br>Nở một câu chuyện.</h1><p class="hero-description">Có biết bao điều hay trong suy nghĩ của em.<br>Cùng nhặt từng ý nhỏ, kể thành lời và viết thành<br class="desktop-break"> đoạn văn của riêng mình.</p><div class="hero-actions">${button(w.seeds.length?'Tiếp tục gieo ý tưởng':'Bắt đầu gieo ý tưởng','start')}<span>${icon('clock')}Học theo nhịp của em</span></div><div class="hero-note"><span class="note-avatars"><i>${icon('leaf')}</i><i>${icon('sun')}</i><i>${icon('heart')}</i></span><span>Không cần viết thật hay ngay.<br>Chỉ cần bắt đầu từ một câu.</span></div></div>
+  return `<section class="home-page"><div class="hero-content"><p class="eyebrow"><span class="little-leaf">${icon('leaf')}</span>Chào nhà văn nhỏ, mình cùng bắt đầu nhé!</p><h1>Gieo một ý tưởng.<br><span>Nở một câu chuyện.</span></h1><p class="hero-description">Có biết bao điều hay trong suy nghĩ của em.<br>Cùng nhặt từng ý nhỏ, kể thành lời và viết thành<br class="desktop-break"> đoạn văn của riêng mình.</p><div class="hero-actions">${button(w.seeds.length?'Tiếp tục gieo ý tưởng':'Bắt đầu gieo ý tưởng','start')}<span>${icon('clock')}Học theo nhịp của em</span></div><div class="hero-note"><span class="note-avatars"><i>${icon('leaf')}</i><i>${icon('sun')}</i><i>${icon('heart')}</i></span><span>Không cần viết thật hay ngay.<br>Chỉ cần bắt đầu từ một câu.</span></div></div>
     <div class="hero-scene-slot"></div><div class="home-lower"><div class="section-heading"><div><span class="small-label">Hôm nay em muốn kể về…</span><h2>Chọn một hạt ý tưởng</h2></div><button class="text-button" data-action="teacher">Đề bài của cô/thầy ${icon('plus')}</button></div><div class="topic-grid">${PRESETS.map((p,i)=>`<button class="topic-card ${p.id===state.lesson.id?'is-selected':''}" data-preset="${i}"><span class="topic-icon topic-${i}">${icon(p.emoji)}</span><span class="topic-card-copy"><small>${p.tag}</small><strong>${p.title}</strong></span><span class="topic-radio">${p.id===state.lesson.id?icon('check'):icon('arrow')}</span></button>`).join('')}</div><div class="current-prompt"><span>Đề đang chọn</span><p>${e(state.lesson.prompt)}</p></div>
     <div class="section-heading seed-heading"><div><span class="small-label">Ba màu sắc, ba cách kể</span><h2>Mỗi câu văn là một hạt mầm</h2></div><span class="gentle-note">Một câu có thể vừa kể vừa tả.<br>Em chọn vai trò chính cho hạt của mình.</span></div>${seedPicker()}
     <div class="journey-banner"><span class="banner-icon">${icon('garden')}</span><div><strong>Từ ý tưởng đến khu vườn câu chữ</strong><p>Gieo ý tưởng ${icon('right')} Kể cho bạn ${icon('right')} Viết thành đoạn ${icon('right')} Cùng chăm chút</p></div><button class="icon-button" data-action="help" aria-label="Xem hướng dẫn hành trình">${icon('arrow')}</button></div></div></section>`;

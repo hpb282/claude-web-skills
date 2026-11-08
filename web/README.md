@@ -4,6 +4,8 @@ Web tập viết tiếng Việt cho học sinh tiểu học, phát triển trự
 
 ![Giao diện Mầm chữ với ba hạt câu văn 3D](docs/preview.png)
 
+Giao diện dùng bảng màu từ poster Mầm chữ: xanh lá, vàng nắng, cam san hô và hồng. Màu sắc được áp dụng cho thanh điều hướng, chủ đề, ba loại hạt và từng bước học; vùng nhập văn bản giữ nền sáng dễ đọc. Lớp giao diện ở `src/learning/garden-theme.css` sử dụng lại toàn bộ cấu trúc, chức năng và cảnh 3D hiện có.
+
 ## Bản HTML đóng gói, không cần npm
 
 [Tải gói HTML](https://github.com/hpb282/claude-web-skills/raw/refs/heads/codex/mam-chu-writing/downloads/mam-chu-html.zip), giải nén, mở thư mục đó bằng VS Code rồi chọn **Open with Live Server** trên `index.html`.
