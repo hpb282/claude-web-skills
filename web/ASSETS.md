@@ -35,3 +35,9 @@ Full dependency license files are included in the installed packages. Asset cred
 The three seed models are procedural Three.js geometry in `src/learning/seed-scene.js`; the character illustrations and interface icons are authored SVG in `src/learning/icons.js`. The garden continues to use the generated `highlands.png` landscape credited above. Original models, photographs, decoders and the entire original application remain available at `/original.html`. `docs/preview.png` is a screenshot of the learning application, without student personal information.
 
 `public/assets/garden-accents.svg` is an authored vector illustration of leaves and flowers for the colourful learning theme. Its sun, sky and hills are CSS backgrounds in `src/learning/garden-theme.css`; the interactive seed models remain unchanged.
+
+## Presentation and promotional material
+
+`src/presentation/` reuses the learning seed scene, authored icons, character illustrations, rules for writing exercises, garden accents and highlands artwork credited above. Its WebP images are screenshots of the implemented application using authored example data. The curtain, blinds, doors, paper and book illustrations are CSS and SVG. The supplied video is a visual reference for transition styles and is not redistributed.
+
+The square and portrait service advertisements in `downloads/quang-cao-website/` were generated from screenshots of the two implemented interfaces. The footwear storefront is explicitly labelled as a concept demo, not a client endorsement or official brand partnership.

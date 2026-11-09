@@ -6,6 +6,12 @@ Web tập viết tiếng Việt cho học sinh tiểu học, phát triển trự
 
 Giao diện dùng bảng màu từ poster Mầm chữ: xanh lá, vàng nắng, cam san hô và hồng. Màu sắc được áp dụng cho thanh điều hướng, chủ đề, ba loại hạt và từng bước học; vùng nhập văn bản giữ nền sáng dễ đọc. Lớp giao diện ở `src/learning/garden-theme.css` sử dụng lại toàn bộ cấu trúc, chức năng và cảnh 3D hiện có.
 
+## Bài thuyết trình có hiệu ứng
+
+Mở `/slides.html` khi chạy mã nguồn. Bản 12 slide có rèm sân khấu, dải trượt, cửa mở với phối cảnh, hạt 3D và phần minh họa có thể bấm thử; kèm ghi chú nói khoảng 7 phút. Dùng `←` / `→` đổi slide, F toàn màn hình, O mục lục, N ghi chú và M giảm chuyển động.
+
+[Tải gói trình chiếu HTML](https://raw.githubusercontent.com/hpb282/claude-web-skills/codex/mam-chu-writing/downloads/mam-chu-thuyet-trinh.zip), giải nén rồi mở `slides.html` bằng Live Server. Gói đi kèm `index.html` và `original.html` để mở ứng dụng thật trong tab mới, không cần npm. Cách tạo và kiểm tra ở [hướng dẫn nguồn slide](src/presentation/README.md).
+
 ## Bản HTML đóng gói, không cần npm
 
 [Tải gói HTML](https://github.com/hpb282/claude-web-skills/raw/refs/heads/codex/mam-chu-writing/downloads/mam-chu-html.zip), giải nén, mở thư mục đó bằng VS Code rồi chọn **Open with Live Server** trên `index.html`.

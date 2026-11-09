@@ -10,6 +10,8 @@
     "test": "playwright test",
     "test:unit": "node --test tests-unit/*.test.js",
     "build:html": "npm run build && node scripts/package-html.mjs",
+    "build:slides": "npm run build && node scripts/package-html.mjs --slides-only",
+    "test:slides": "node scripts/check-slides.mjs",
     "test:html": "node scripts/check-html.mjs"
   },
   "dependencies": {

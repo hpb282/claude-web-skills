@@ -8,7 +8,8 @@ import {Script} from 'node:vm';
 
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'..');
 const dist=resolve(root,'dist');
-const output=resolve(root,'html-ready');
+const slidesOnly=process.argv.includes('--slides-only');
+const output=resolve(root,slidesOnly?'slides-ready':'html-ready');
 const temporary=await mkdtemp(join(tmpdir(),'mam-chu-html-'));
 const mime={'.js':'text/javascript','.css':'text/css','.wasm':'application/wasm','.png':'image/png','.jpg':'image/jpeg','.jpeg':'image/jpeg','.svg':'image/svg+xml','.glb':'model/gltf-binary','.woff':'font/woff','.woff2':'font/woff2'};
 const uriCache=new Map();
@@ -81,8 +82,11 @@ async function createPage(filename,legacy){
 try{
   if(!existsSync(join(dist,'index.html')))throw new Error('Run npm run build first.');
   await mkdir(output,{recursive:true});
-  await createPage('index.html',false);
-  await createPage('original.html',true);
+  if(slidesOnly)await createPage('slides.html',false);
+  else{
+    await createPage('index.html',false);
+    await createPage('original.html',true);
+  }
   await copyFile(join(root,'ASSETS.md'),join(output,'NGUON-TAI-NGUYEN.md'));
   await mkdir(join(output,'licenses'),{recursive:true});
   for(const [pkg,name] of [['three','three'],['gsap','gsap'],['@fontsource-variable/dm-sans','dm-sans'],['@fontsource/barlow-condensed','barlow-condensed']]){
@@ -90,5 +94,7 @@ try{
     const file=(await readdir(folder)).find(n=>/^license(?:\.md|\.txt)?$|^ofl\.txt$/iu.test(n));
     if(file)await copyFile(join(folder,file),join(output,'licenses',`${name}.txt`));
   }
-  await writeFile(join(output,'HUONG-DAN.txt'),"MẦM CHỮ — BẢN HTML ĐÃ ĐÓNG GÓI\n\nCÁCH MỞ ĐÃ ĐƯỢC KIỂM THỬ (KHÔNG CẦN NPM)\n1. Giải nén toàn bộ ZIP ra một thư mục mới.\n2. Trong VS Code, chọn File > Open Folder và mở thư mục vừa giải nén.\n3. Chuột phải index.html > Open with Live Server.\n4. Trình duyệt sẽ mở Mầm chữ. Không cần cài Node.js hoặc chạy npm.\n5. Giữ original.html cạnh index.html để mở phòng hiệu ứng gốc.\n\nThư viện, font, hình ảnh và mô hình đã được nhúng trong hai tệp HTML. Khi trang đã mở, các luồng học và hiệu ứng không cần tải thêm tài nguyên từ mạng.\n\nTÙY CHỌN MỞ TRỰC TIẾP\nCó thể thử nhấp đúp index.html để mở bằng Chrome/Cốc Cốc. Tuy nhiên, môi trường kiểm thử chặn điều hướng file:// nên chưa xác nhận được chế độ này. Nếu gặp trang trống hoặc trình duyệt chặn tệp cục bộ, dùng cách Live Server ở trên.\n\nBÀI VIẾT\nBài được lưu trên trình duyệt/thiết bị hiện tại. Dùng nút tải bài .json để sao lưu. Muốn chuyển bài từ bản chạy npm, xuất .json ở bản cũ rồi nhập lại ở bản HTML. Bản ở địa chỉ/cổng khác không tự dùng chung dữ liệu trình duyệt.\n\nĐọc tiếng Việt cần máy có giọng đọc tiếng Việt. Bộ kiểm tra văn vẫn dùng quy tắc cục bộ, chưa phải AI chữa ngữ pháp toàn diện.\n\nTÀI NGUYÊN\nindex.html: Mầm chữ, ba hạt 3D, câu hỏi, kể theo cặp, viết và luyện sửa.\noriginal.html: bản gốc với mô hình giày 3D thật, quần áo treo và lookbook.\nGiữ thư mục licenses và NGUON-TAI-NGUYEN.md khi chia sẻ lại.\n",'utf8');
+  if(slidesOnly){
+    await writeFile(join(output,'HUONG-DAN.txt'),'MẦM CHỮ — BÀI THUYẾT TRÌNH HTML\n\n1. Giải nén ZIP. Mở thư mục bằng VS Code.\n2. Chuột phải slides.html > Open with Live Server. Không cần npm.\n3. Dùng mũi tên trái/phải hoặc Space để đổi slide. F: toàn màn hình.\n4. O: mục lục. N: ghi chú. M: giảm chuyển động.\n5. Bấm các chủ đề, loại hạt, nút ghép đoạn và đáp án để thử minh họa.\n6. Nút Mở web mở index.html trong tab mới; giữ index.html và original.html cùng thư mục.\n\nSlide có 12 trang, gợi ý thuyết trình khoảng 7 phút. Ghi chú hiện trên cùng màn hình, nên đóng trước khi trình chiếu tiếp. Các ví dụ là học liệu tự biên soạn.\n\nTất cả tài nguyên cần cho slide được nhúng trong slides.html. Bản chạy qua HTTP/Live Server là cách kiểm thử; file:// có thể bị chính sách trình duyệt chặn và chưa được xác nhận trong môi trường kiểm thử.\n\nGiữ thư mục licenses và NGUON-TAI-NGUYEN.md khi chia sẻ.\n','utf8');
+  }else await writeFile(join(output,'HUONG-DAN.txt'),"MẦM CHỮ — BẢN HTML ĐÃ ĐÓNG GÓI\n\nCÁCH MỞ ĐÃ ĐƯỢC KIỂM THỬ (KHÔNG CẦN NPM)\n1. Giải nén toàn bộ ZIP ra một thư mục mới.\n2. Trong VS Code, chọn File > Open Folder và mở thư mục vừa giải nén.\n3. Chuột phải index.html > Open with Live Server.\n4. Trình duyệt sẽ mở Mầm chữ. Không cần cài Node.js hoặc chạy npm.\n5. Giữ original.html cạnh index.html để mở phòng hiệu ứng gốc.\n\nThư viện, font, hình ảnh và mô hình đã được nhúng trong hai tệp HTML. Khi trang đã mở, các luồng học và hiệu ứng không cần tải thêm tài nguyên từ mạng.\n\nTÙY CHỌN MỞ TRỰC TIẾP\nCó thể thử nhấp đúp index.html để mở bằng Chrome/Cốc Cốc. Tuy nhiên, môi trường kiểm thử chặn điều hướng file:// nên chưa xác nhận được chế độ này. Nếu gặp trang trống hoặc trình duyệt chặn tệp cục bộ, dùng cách Live Server ở trên.\n\nBÀI VIẾT\nBài được lưu trên trình duyệt/thiết bị hiện tại. Dùng nút tải bài .json để sao lưu. Muốn chuyển bài từ bản chạy npm, xuất .json ở bản cũ rồi nhập lại ở bản HTML. Bản ở địa chỉ/cổng khác không tự dùng chung dữ liệu trình duyệt.\n\nĐọc tiếng Việt cần máy có giọng đọc tiếng Việt. Bộ kiểm tra văn vẫn dùng quy tắc cục bộ, chưa phải AI chữa ngữ pháp toàn diện.\n\nTÀI NGUYÊN\nindex.html: Mầm chữ, ba hạt 3D, câu hỏi, kể theo cặp, viết và luyện sửa.\noriginal.html: bản gốc với mô hình giày 3D thật, quần áo treo và lookbook.\nGiữ thư mục licenses và NGUON-TAI-NGUYEN.md khi chia sẻ lại.\n",'utf8');
 }finally{await rm(temporary,{recursive:true,force:true});}
